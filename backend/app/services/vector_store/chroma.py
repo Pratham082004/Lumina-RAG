@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from uuid import uuid4
 
 import chromadb
 from chromadb.config import Settings
@@ -14,15 +13,22 @@ logger = logging.getLogger(__name__)
 
 
 class ChromaService(VectorStore):
+
     def __init__(self) -> None:
 
         self.client = chromadb.PersistentClient(
             path=settings.CHROMA_PATH,
-            settings=Settings(anonymized_telemetry=False),
+            settings=Settings(
+                anonymized_telemetry=False,
+            ),
         )
 
         self.collection_name = settings.CHROMA_COLLECTION
         self.collection = None
+
+    # ---------------------------------------------------------
+    # Collection
+    # ---------------------------------------------------------
 
     async def create_collection(self) -> None:
 
@@ -38,12 +44,16 @@ class ChromaService(VectorStore):
             self.collection_name,
         )
 
-    def _ensure_collection(self):
+    def _ensure_collection(self) -> None:
 
         if self.collection is None:
             self.collection = self.client.get_collection(
                 self.collection_name
             )
+
+    # ---------------------------------------------------------
+    # Upsert
+    # ---------------------------------------------------------
 
     async def upsert(
         self,
@@ -63,15 +73,40 @@ class ChromaService(VectorStore):
         metadatas = []
         documents = []
 
-        for vector, payload in zip(vectors, payloads):
+        required = (
+            "ticker",
+            "year",
+            "accession_number",
+            "chunk_id",
+        )
 
-            ids.append(str(uuid4()))
+        for vector, payload in zip(vectors, payloads, strict=False):
+
+            for field in required:
+                if field not in payload:
+                    raise ValueError(
+                        f"Missing metadata field '{field}'"
+                    )
+
+            metadata = payload.copy()
+
+            document = metadata.pop(
+                "text",
+                "",
+            )
+
+            vector_id = "_".join(
+                [
+                    str(metadata["ticker"]),
+                    str(metadata["accession_number"]),
+                    str(metadata["chunk_id"]),
+                ]
+            )
+
+            ids.append(vector_id)
             embeddings.append(vector)
-
-            document = payload.pop("text", "")
             documents.append(document)
-
-            metadatas.append(payload)
+            metadatas.append(metadata)
 
         self.collection.upsert(
             ids=ids,
@@ -80,25 +115,25 @@ class ChromaService(VectorStore):
             metadatas=metadatas,
         )
 
-        logger.info("Inserted %d vectors.", len(ids))
+        logger.info(
+            "Upserted %d vectors.",
+            len(ids),
+        )
+
+    # ---------------------------------------------------------
+    # Search
+    # ---------------------------------------------------------
 
     async def search(
         self,
         vector: list[float],
+        where: dict[str, Any] | None =None,
         limit: int = 5,
-        ticker: str | None = None,
     ):
 
         self._ensure_collection()
 
-        where = None
-
-        if ticker:
-            where = {
-                "ticker": ticker,
-            }
-
-        results = self.collection.query(
+        return self.collection.query(
             query_embeddings=[vector],
             n_results=limit,
             where=where,
@@ -109,23 +144,67 @@ class ChromaService(VectorStore):
             ],
         )
 
-        return results
+    # ---------------------------------------------------------
+    # Exists
+    # ---------------------------------------------------------
+
+    async def exists(
+        self,
+        where: dict[str, Any],
+    ) -> bool:
+
+        self._ensure_collection()
+
+        result = self.collection.get(
+            where=where,
+            limit=1,
+        )
+
+        return len(result["ids"]) > 0
+
+    # ---------------------------------------------------------
+    # Count
+    # ---------------------------------------------------------
+
+    async def count(
+        self,
+        where: dict[str, Any] | None = None,
+    ) -> int:
+
+        self._ensure_collection()
+
+        if where is None:
+            return self.collection.count()
+
+        result = self.collection.get(
+            where=where,
+        )
+
+        return len(result["ids"])
+
+    # ---------------------------------------------------------
+    # Delete
+    # ---------------------------------------------------------
 
     async def delete(
         self,
-        filters: dict[str, Any],
+        where: dict[str, Any],
     ) -> None:
 
         self._ensure_collection()
 
         self.collection.delete(
-            where=filters,
+            where=where,
         )
 
         logger.info(
             "Deleted vectors matching %s",
-            filters,
+            where,
         )
+
+    # ---------------------------------------------------------
+    # Health
+    # ---------------------------------------------------------
 
     async def health_check(self) -> bool:
 
@@ -133,20 +212,15 @@ class ChromaService(VectorStore):
             self.client.heartbeat()
             return True
 
-        except Exception as exc:
-            logger.exception(exc)
+        except Exception:
+            logger.exception(
+                "Chroma health check failed."
+            )
             return False
 
-    async def collection_exists(self) -> bool:
-
-        collections = self.client.list_collections()
-
-        names = [
-            collection.name
-            for collection in collections
-        ]
-
-        return self.collection_name in names
+    # ---------------------------------------------------------
+    # Cleanup
+    # ---------------------------------------------------------
 
     async def close(self) -> None:
         pass

@@ -26,6 +26,7 @@ class CompanyRepository:
         exchange: str | None = None,
         sector: str | None = None,
         industry: str | None = None,
+        cik: str | None = None,
     ) -> Company:
 
         company = Company(
@@ -34,6 +35,7 @@ class CompanyRepository:
             exchange=exchange,
             sector=sector,
             industry=industry,
+            cik=cik,
         )
 
         self.db.add(company)
@@ -41,6 +43,25 @@ class CompanyRepository:
         self.db.refresh(company)
 
         return company
+
+    def get_or_create_by_ticker(
+        self,
+        ticker: str,
+        name: str,
+        cik: str,
+    ) -> Company:
+        """Look up a company by ticker, or create one if it doesn't exist."""
+
+        company = self.get_by_ticker(ticker)
+
+        if company is not None:
+            return company
+
+        return self.create(
+            ticker=ticker,
+            name=name,
+            cik=cik,
+        )
 
     def list_all(self) -> list[Company]:
         stmt = select(Company).order_by(Company.name)

@@ -20,16 +20,30 @@ class VectorStore(ABC):
     async def search(
         self,
         vector: list[float],
+        where: dict[str, Any] | None = None,
         limit: int = 5,
-        ticker: str | None = None,
     ):
         ...
 
     @abstractmethod
     async def delete(
         self,
-        filters: dict[str, Any],
+        where: dict[str, Any],
     ) -> None:
+        ...
+
+    @abstractmethod
+    async def exists(
+        self,
+        where: dict[str, Any],
+    ) -> bool:
+        ...
+
+    @abstractmethod
+    async def count(
+        self,
+        where: dict[str, Any] | None = None,
+    ) -> int:
         ...
 
     @abstractmethod

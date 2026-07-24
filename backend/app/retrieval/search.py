@@ -22,34 +22,23 @@ class RetrievalService:
         self,
         question: str,
         ticker: str | None = None,
+        years: list[int] | None = None,
+        filing_type: str | None = None,
+        section: str | None = None,
         limit: int = 5,
     ) -> RetrievalResult:
         """
-        Search the vector database for the most relevant chunks.
-
-        Parameters
-        ----------
-        question : str
-            User question.
-
-        ticker : str | None
-            Optional company ticker filter.
-
-        limit : int
-            Number of chunks to retrieve.
-
-        Returns
-        -------
-        RetrievalResult
+        Search ChromaDB using semantic similarity
+        with optional metadata filters.
         """
 
         logger.info(
-            "Searching documents for: %s",
+            "Searching for question: %s",
             question,
         )
 
         # --------------------------------------------------
-        # Embed the question
+        # Embed query
         # --------------------------------------------------
 
         query_vector = await self.embedding_service.embed(
@@ -57,18 +46,59 @@ class RetrievalService:
         )
 
         # --------------------------------------------------
-        # Search ChromaDB
+        # Metadata Filter
+        # --------------------------------------------------
+
+        where = {}
+
+        if ticker:
+            where["ticker"] = ticker
+
+        if years:
+
+            if len(years) == 1:
+                where["year"] = years[0]
+
+            else:
+                where["year"] = {
+                    "$in": years
+                }
+
+        if filing_type:
+            where["filing_type"] = filing_type
+
+        if section:
+            where["section"] = section
+
+        logger.info(
+            "Metadata Filter: %s",
+            where,
+        )
+
+        # --------------------------------------------------
+        # Search Vector Store
         # --------------------------------------------------
 
         raw_results = await self.vector_store.search(
             vector=query_vector,
-            ticker=ticker,
+            where=where if where else None,
             limit=limit,
         )
 
-        documents = raw_results.get("documents", [[]])[0]
-        metadatas = raw_results.get("metadatas", [[]])[0]
-        distances = raw_results.get("distances", [[]])[0]
+        documents = raw_results.get(
+            "documents",
+            [[]],
+        )[0]
+
+        metadatas = raw_results.get(
+            "metadatas",
+            [[]],
+        )[0]
+
+        distances = raw_results.get(
+            "distances",
+            [[]],
+        )[0]
 
         results = []
 
@@ -76,13 +106,19 @@ class RetrievalService:
             documents,
             metadatas,
             distances,
+            strict=False,
         ):
+
+            similarity = max(
+                0.0,
+                1.0 - distance,
+            )
 
             results.append(
                 SearchResult(
                     text=document,
                     metadata=metadata,
-                    score=1 - distance,
+                    score=similarity,
                 )
             )
 
@@ -93,5 +129,9 @@ class RetrievalService:
 
         return RetrievalResult(
             question=question,
-            results=results,
+            results=sorted(
+                results,
+                key=lambda r: r.score,
+                reverse=True,
+            ),
         )
