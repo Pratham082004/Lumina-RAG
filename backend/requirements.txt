@@ -11,3 +11,5 @@ google-genai
 beautifulsoup4
 lxml
 chromadb
+pytest
+pytest-asyncio
