@@ -10,3 +10,4 @@ const startServer = () => {
 };
 
 startServer();
+// trigger restart

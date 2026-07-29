@@ -15,6 +15,10 @@ model User {
   profileImage            String?
   provider                String?
   providerId              String?
+  jobTitle                String?
+  company                 String?
+  investmentStyle         String?
+  onboardingCompleted     Boolean                  @default(false)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   
@@ -67,5 +71,6 @@ model Message {
   chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
   role          String      // 'user' | 'assistant'
   content       String
+  sources       Json?
   createdAt     DateTime    @default(now())
 }
