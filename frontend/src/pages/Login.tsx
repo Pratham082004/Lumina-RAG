@@ -24,7 +24,13 @@ const Login: React.FC = () => {
         password
       });
       if (res.data.success) {
-        navigate('/dashboard');
+        localStorage.setItem('user', JSON.stringify(res.data.data.user));
+        localStorage.setItem('token', res.data.data.accessToken);
+        if (res.data.data.user.onboardingCompleted) {
+          navigate('/dashboard');
+        } else {
+          navigate('/onboarding');
+        }
       }
     } catch (err: any) {
       console.error('Login error:', err);
@@ -110,7 +116,13 @@ const Login: React.FC = () => {
                     token: credentialResponse.credential
                   });
                   if (res.data.success) {
-                    navigate('/dashboard');
+                    localStorage.setItem('user', JSON.stringify(res.data.data.user));
+                    localStorage.setItem('token', res.data.data.accessToken);
+                    if (res.data.data.user.onboardingCompleted) {
+                      navigate('/dashboard');
+                    } else {
+                      navigate('/onboarding');
+                    }
                   }
                 } catch (error) {
                   console.error('Google Auth Error:', error);
