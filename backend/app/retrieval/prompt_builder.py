@@ -20,6 +20,32 @@ Rules:
 5. If multiple years are provided, compare them when appropriate.
 6. Cite the section(s) used in your answer.
 7. Keep answers concise, factual, and professional.
+
+VISUALIZATION INSTRUCTIONS:
+When the user asks for financial data that would be best represented visually (such as a breakdown, comparison, historical trend, or proportions), you MUST provide a chart using the following specific markdown format.
+
+Always wrap the chart data in a markdown code block tagged with `chart`. The contents of the block must be valid, parseable JSON.
+
+Supported chart types are: "pie", "bar", and "line".
+
+Format Example:
+```chart
+{
+  "type": "bar",
+  "title": "Quarterly Revenue Comparison",
+  "data": [
+    { "name": "Q1", "value": 150 },
+    { "name": "Q2", "value": 180 },
+    { "name": "Q3", "value": 160 }
+  ]
+}
+```
+
+Rules for charts:
+1. Ensure the JSON is strictly valid (use double quotes for keys).
+2. The `data` array must contain objects with `name` (for the x-axis or category) and `value` (for the y-axis or metric) keys.
+3. Include a descriptive `title`.
+4. You may include regular text explanations before or after the chart block to provide context.
 """
 
     def build(
