@@ -38,6 +38,7 @@ async def chat(
         result = await rag_service.ask(
             question=request.question,
             limit=request.limit,
+            session_id=request.session_id,
         )
 
         logger.info(

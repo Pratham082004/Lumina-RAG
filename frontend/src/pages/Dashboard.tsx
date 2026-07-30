@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin } from 'lucide-react';
+import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -191,7 +191,8 @@ const Dashboard: React.FC = () => {
       try {
         const resAi = await axios.post('http://localhost:8000/chat/', {
           question: questionToAsk,
-          limit: 3
+          limit: 3,
+          session_id: currentSessionId
         });
         assistantResponse = resAi.data.answer;
         sources = resAi.data.sources;
@@ -216,6 +217,37 @@ const Dashboard: React.FC = () => {
 
     } catch (error) {
       console.error("Chat flow error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    let currentSessionId = activeSessionId;
+    if (!currentSessionId) {
+      const title = `Analysis: ${file.name}`;
+      const resSession = await axios.post(`http://localhost:4000/api/auth/history/${user.id}`, { title });
+      currentSessionId = resSession.data.data.id;
+      setActiveSessionId(currentSessionId);
+      setSessions([{ id: currentSessionId!, title, updatedAt: new Date().toISOString() }, ...sessions]);
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('session_id', currentSessionId!);
+
+    try {
+      setIsLoading(true);
+      await axios.post('http://localhost:8000/ingest/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMessages([...messages, { role: 'assistant', content: `Successfully uploaded and processed ${file.name}. You can now ask questions about it.` }]);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setMessages([...messages, { role: 'assistant', content: `Failed to upload ${file.name}.` }]);
     } finally {
       setIsLoading(false);
     }
@@ -357,6 +389,27 @@ const Dashboard: React.FC = () => {
                   }}
                   rows={1}
                 />
+                <label style={{
+                    position: 'absolute',
+                    right: '56px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <Paperclip size={18} />
+                    <input type="file" style={{ display: 'none' }} onChange={handleFileUpload} accept=".pdf,.txt" />
+                  </label>
                 <button 
                   onClick={() => handleSubmit()}
                   disabled={!input.trim() || isLoading}
