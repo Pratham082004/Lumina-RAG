@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -41,26 +41,36 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
       {/* Left Form Section */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '4rem', zIndex: 10 }}>
-        <motion.div 
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="glass-panel"
-          style={{ maxWidth: '440px', width: '100%', margin: '0 auto', padding: '3rem' }}
-        >
-          <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-            <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Welcome Back</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Sign in to access your financial insights</p>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem', zIndex: 10 }}>
+        <div style={{ maxWidth: '440px', width: '100%', margin: '0 auto' }}>
+          <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>Welcome back</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>Sign in to continue</p>
           </div>
 
-          {error && (
-            <div style={{ padding: '0.75rem', marginBottom: '1rem', background: 'rgba(255,0,0,0.1)', color: 'red', borderRadius: '4px', textAlign: 'center' }}>
-              {error}
-            </div>
-          )}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="glass-panel"
+            style={{ padding: '2.5rem' }}
+          >
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                style={{ overflow: 'hidden', marginBottom: '1.5rem' }}
+              >
+                <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', borderRadius: '8px', textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                  {error}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
@@ -95,10 +105,17 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit" 
+              disabled={isLoading} 
+              className="btn btn-primary" 
+              style={{ width: '100%', marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
-              <ArrowRight size={18} />
-            </button>
+              {isLoading ? <Loader2 size={18} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> : <ArrowRight size={18} />}
+            </motion.button>
           </form>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -139,22 +156,22 @@ const Login: React.FC = () => {
 
           <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem' }}>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Don't have an account? <a href="/register" className="text-gradient" style={{ textDecoration: 'none', fontWeight: 600 }}>Create one now</a>
+              Don't have an account? <a href="/register" style={{ color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 500 }}>Create one now</a>
             </p>
           </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
 
       {/* Right Image Section */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', padding: '1.5rem', background: 'var(--bg-primary)' }}>
         <motion.div 
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1 }}
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-color)' }}
         >
-          <img src={illustration} alt="Abstract Financial AI" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(to right, var(--bg-primary) 0%, transparent 50%)' }} />
+          <img src={illustration} alt="Platform Illustration" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </motion.div>
       </div>
     </div>

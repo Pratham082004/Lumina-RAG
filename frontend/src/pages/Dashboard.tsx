@@ -102,6 +102,7 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Fetch all sessions on mount
   useEffect(() => {
@@ -187,23 +188,76 @@ const Dashboard: React.FC = () => {
 
       // 3. Get Answer from FastAPI backend
       let assistantResponse = '';
-      let sources = [];
+      let sources: any[] = [];
+      
+      // Initialize empty assistant message for streaming
+      setMessages(prev => [...prev, { role: 'assistant', content: '', sources: [] }]);
+
       try {
-        const resAi = await axios.post('http://localhost:8000/chat/', {
-          question: questionToAsk,
-          limit: 3,
-          session_id: currentSessionId
+        const response = await fetch('http://localhost:8000/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question: questionToAsk,
+            limit: 3,
+            session_id: currentSessionId
+          })
         });
-        assistantResponse = resAi.data.answer;
-        sources = resAi.data.sources;
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (reader) {
+          let buffer = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            if (value) {
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || ''; // Keep the incomplete line in the buffer
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    if (data.type === 'metadata') {
+                      sources = data.sources || [];
+                      setMessages(prev => {
+                        const newMsgs = [...prev];
+                        newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], sources };
+                        return newMsgs;
+                      });
+                    } else if (data.type === 'chunk') {
+                      assistantResponse += data.content;
+                      setMessages(prev => {
+                        const newMsgs = [...prev];
+                        newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], content: assistantResponse };
+                        return newMsgs;
+                      });
+                    }
+                  } catch (e) {
+                    console.error("Error parsing stream chunk", e, line);
+                  }
+                }
+              }
+            }
+          }
+        }
       } catch (err) {
         console.error("FastAPI error:", err);
-        assistantResponse = "I'm sorry, I encountered an error connecting to the RAG backend.";
+        assistantResponse = assistantResponse || "I'm sorry, I encountered an error connecting to the RAG backend.";
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], content: assistantResponse };
+          return newMsgs;
+        });
       }
-
-      // Update UI with AI response
-      const updatedMessages = [...newMessages, { role: 'assistant' as const, content: assistantResponse, sources }];
-      setMessages(updatedMessages);
 
       // 4. Save Assistant Message to DB
       await axios.post(`http://localhost:4000/api/auth/history/session/${currentSessionId}/message`, {
@@ -222,10 +276,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     let currentSessionId = activeSessionId;
     if (!currentSessionId) {
       const title = `Analysis: ${file.name}`;
@@ -244,12 +295,40 @@ const Dashboard: React.FC = () => {
       await axios.post('http://localhost:8000/ingest/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setMessages([...messages, { role: 'assistant', content: `Successfully uploaded and processed ${file.name}. You can now ask questions about it.` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Successfully uploaded and processed ${file.name}. You can now ask questions about it.` }]);
     } catch (error) {
       console.error('Upload failed:', error);
-      setMessages([...messages, { role: 'assistant', content: `Failed to upload ${file.name}.` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Failed to upload ${file.name}.` }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
     }
   };
 
@@ -263,13 +342,26 @@ const Dashboard: React.FC = () => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Sidebar */}
-      <div style={{ 
-        width: '260px', 
-        backgroundColor: '#171717', 
-        display: 'flex', 
-        flexDirection: 'column',
-        borderRight: '1px solid rgba(255,255,255,0.05)'
-      }}>
+      <div 
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        style={{ 
+          width: '260px', 
+          backgroundColor: isDragging ? 'rgba(255,255,255,0.05)' : 'var(--bg-secondary)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          borderRight: isDragging ? '2px dashed var(--accent-blue)' : '1px solid var(--border-color)',
+          transition: 'all 0.2s ease',
+          position: 'relative'
+        }}
+      >
+        {isDragging && (
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 10, color: 'var(--text-primary)', backdropFilter: 'blur(4px)' }}>
+            <FileText size={48} style={{ marginBottom: '1rem', color: 'var(--accent-blue)' }} />
+            <p style={{ fontWeight: 500 }}>Drop file to upload</p>
+          </div>
+        )}
         <div style={{ padding: '1.5rem 1rem' }}>
           <button 
             onClick={startNewChat}
@@ -280,7 +372,7 @@ const Dashboard: React.FC = () => {
               justifyContent: 'space-between',
               padding: '0.75rem 1rem',
               backgroundColor: 'transparent',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--border-color)',
               borderRadius: '8px',
               color: 'var(--text-primary)',
               cursor: 'pointer',
@@ -290,7 +382,7 @@ const Dashboard: React.FC = () => {
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className="text-gradient" style={{ fontWeight: 'bold' }}>FinRAG AI</span>
+              <span style={{ fontWeight: 'bold', fontFamily: 'Lora, serif' }}>Lumina Finance</span>
             </span>
             <Plus size={18} />
           </button>
@@ -301,32 +393,46 @@ const Dashboard: React.FC = () => {
             <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>
               Recent Chats
             </h3>
-            {sessions.map(chat => (
-              <div 
-                key={chat.id} 
-                onClick={() => loadSession(chat.id)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.75rem', 
-                  padding: '0.5rem', 
-                  borderRadius: '6px', 
-                  cursor: 'pointer', 
-                  color: activeSessionId === chat.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  backgroundColor: activeSessionId === chat.id ? 'rgba(255,255,255,0.05)' : 'transparent'
-                }}
-                onMouseOver={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
-                onMouseOut={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
-              >
-                <MessageSquare size={14} />
-                <span style={{ fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.title}</span>
-              </div>
-            ))}
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+            >
+              {sessions.map(chat => (
+                <motion.div 
+                  key={chat.id} 
+                  variants={{
+                    hidden: { opacity: 0, x: -10 },
+                    visible: { opacity: 1, x: 0 }
+                  }}
+                  onClick={() => loadSession(chat.id)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.75rem', 
+                    padding: '0.5rem', 
+                    borderRadius: '6px', 
+                    cursor: 'pointer', 
+                    color: activeSessionId === chat.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    backgroundColor: activeSessionId === chat.id ? 'rgba(255,255,255,0.05)' : 'transparent',
+                    transition: 'background-color 0.2s ease, color 0.2s ease'
+                  }}
+                  onMouseOver={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
+                  onMouseOut={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
+                >
+                  <MessageSquare size={14} />
+                  <span style={{ fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.title}</span>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
 
         {/* Profile Footer */}
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}
                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -352,7 +458,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#212121', position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-primary)', position: 'relative' }}>
         
         {messages.length === 0 ? (
           /* Empty State */
@@ -360,7 +466,7 @@ const Dashboard: React.FC = () => {
             <motion.h1 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              style={{ fontSize: '2.5rem', fontWeight: 600, marginBottom: '3rem', color: 'var(--text-primary)' }}
+              style={{ fontSize: '2.5rem', fontWeight: 500, fontFamily: 'Lora, serif', marginBottom: '3rem', color: 'var(--text-primary)' }}
             >
               Ready when you are.
             </motion.h1>
@@ -376,9 +482,9 @@ const Dashboard: React.FC = () => {
                     width: '100%',
                     padding: '1.25rem 3.5rem 1.25rem 1.5rem',
                     borderRadius: '24px',
-                    backgroundColor: '#2F2F2F',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'white',
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     fontSize: '1rem',
                     resize: 'none',
                     minHeight: '60px',
@@ -454,18 +560,20 @@ const Dashboard: React.FC = () => {
         ) : (
           /* Chat History View */
           <>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
-              <div style={{ maxWidth: '768px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+              <AnimatePresence>
                 {messages.map((msg, idx) => (
                   <motion.div 
                     key={idx} 
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     style={{ 
                       display: 'flex', 
                       gap: '1.5rem',
-                      alignItems: 'flex-start',
-                      flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'
+                      marginBottom: '2rem',
+                      justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
                     }}
                   >
                     {msg.role === 'assistant' ? (
@@ -480,7 +588,8 @@ const Dashboard: React.FC = () => {
                     
                     <div style={{ 
                       maxWidth: '85%', 
-                      background: msg.role === 'user' ? '#2F2F2F' : 'transparent',
+                      background: msg.role === 'user' ? 'var(--bg-secondary)' : 'transparent',
+                      border: msg.role === 'user' ? '1px solid var(--border-color)' : 'none',
                       padding: msg.role === 'user' ? '1rem 1.5rem' : '0.5rem 0',
                       borderRadius: msg.role === 'user' ? '24px' : '0',
                       color: 'var(--text-primary)',
@@ -541,11 +650,12 @@ const Dashboard: React.FC = () => {
                   </motion.div>
                 )}
                 <div ref={messagesEndRef} />
-              </div>
+              </AnimatePresence>
+            </div>
             </div>
 
             {/* Bottom Input Area */}
-            <div style={{ padding: '1rem 2rem 2rem', background: 'linear-gradient(to top, #212121 80%, transparent)' }}>
+            <div style={{ padding: '1rem 2rem 2rem', background: 'linear-gradient(to top, var(--bg-primary) 80%, transparent)' }}>
               <div style={{ maxWidth: '768px', margin: '0 auto', position: 'relative' }}>
                 <textarea
                   value={input}
@@ -556,9 +666,9 @@ const Dashboard: React.FC = () => {
                     width: '100%',
                     padding: '1rem 3.5rem 1rem 1.5rem',
                     borderRadius: '24px',
-                    backgroundColor: '#2F2F2F',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'white',
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     fontSize: '1rem',
                     resize: 'none',
                     minHeight: '52px',
@@ -594,7 +704,7 @@ const Dashboard: React.FC = () => {
                 </button>
               </div>
               <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                FinRAG AI can make mistakes. Verify important financial information.
+                Lumina Finance can make mistakes. Verify important financial information.
               </div>
             </div>
           </>

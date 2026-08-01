@@ -15,7 +15,7 @@ const About: React.FC = () => {
           transition={{ duration: 0.6 }}
           style={{ textAlign: 'center', marginBottom: '5rem' }}
         >
-          <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>About <span className="text-gradient">FinRAG</span></h1>
+          <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>About <span className="text-gradient">Lumina</span></h1>
           <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto', lineHeight: 1.6 }}>
             We are revolutionizing how analysts, investors, and researchers interact with financial data by bridging the gap between raw SEC filings and actionable intelligence.
           </p>
