@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip } from 'lucide-react';
+import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   BarChart, Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
@@ -332,6 +334,38 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const exportToPDF = async (messageIndex: number) => {
+    const element = document.getElementById(`message-${messageIndex}`);
+    if (!element) return;
+    
+    // Store original background
+    const originalBackground = element.style.background;
+    element.style.background = 'var(--bg-secondary)';
+    
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#18181b', // Zinc 900 for dark theme
+        useCORS: true,
+      });
+      
+      element.style.background = originalBackground;
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`Lumina-Response-${messageIndex + 1}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      element.style.background = originalBackground;
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -586,16 +620,20 @@ const Dashboard: React.FC = () => {
                       </div>
                     )}
                     
-                    <div style={{ 
-                      maxWidth: '85%', 
-                      background: msg.role === 'user' ? 'var(--bg-secondary)' : 'transparent',
-                      border: msg.role === 'user' ? '1px solid var(--border-color)' : 'none',
-                      padding: msg.role === 'user' ? '1rem 1.5rem' : '0.5rem 0',
-                      borderRadius: msg.role === 'user' ? '24px' : '0',
-                      color: 'var(--text-primary)',
-                      lineHeight: '1.6',
-                      overflowX: 'auto'
-                    }}>
+                    <div 
+                      id={`message-${idx}`}
+                      style={{ 
+                        maxWidth: '85%', 
+                        background: msg.role === 'user' ? 'var(--bg-secondary)' : 'transparent',
+                        border: msg.role === 'user' ? '1px solid var(--border-color)' : 'none',
+                        padding: msg.role === 'user' ? '1rem 1.5rem' : '0.5rem 0',
+                        borderRadius: msg.role === 'user' ? '24px' : '0',
+                        color: 'var(--text-primary)',
+                        lineHeight: '1.6',
+                        overflowX: 'auto',
+                        position: 'relative'
+                      }}
+                    >
                       <div className="markdown-content">
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
@@ -625,6 +663,20 @@ const Dashboard: React.FC = () => {
                               <li key={i}>{src.title || src.metadata?.source || 'Document Extract'}</li>
                             ))}
                           </ul>
+                        </div>
+                      )}
+                      
+                      {msg.role === 'assistant' && !isLoading && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '1rem' }}>
+                          <button
+                            onClick={() => exportToPDF(idx)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.75rem' }}
+                            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                          >
+                            <Download size={14} />
+                            <span>Export PDF</span>
+                          </button>
                         </div>
                       )}
                     </div>
