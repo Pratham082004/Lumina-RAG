@@ -572,7 +572,9 @@ The system includes proper User-Agent headers and respects SEC rate limits.
 - ChromaDB vector store with metadata filtering
 - Source citation in answers
 - LLM-generated charts (bar, line, pie) via structured JSON output
-- Custom document upload (PDF/TXT) for ad-hoc RAG
+- Live streaming AI responses token-by-token
+- Custom document upload (drag-and-drop PDF/TXT) for ad-hoc RAG
+- Export AI responses to downloadable PDF reports
 - JWT authentication with refresh tokens
 - Google OAuth 2.0
 - Email verification & password reset
@@ -584,7 +586,7 @@ The system includes proper User-Agent headers and respects SEC rate limits.
 - 10-Q (quarterly) filing support
 - Real-time SEC feed monitoring
 - Advanced analytics dashboard
-- PDF report export
+- Interactive stock ticker mentions
 
 ---
 
