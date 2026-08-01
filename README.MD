@@ -1,4 +1,4 @@
-# Financial RAG Application
+# Lumina Finance Application
 
 A full-stack **Retrieval-Augmented Generation (RAG)** application for analyzing SEC financial filings (10-K). Automatically ingests, chunks, embeds, and indexes SEC EDGAR filings, then answers natural language questions with cited sources — complete with interactive charts and visualizations.
 
