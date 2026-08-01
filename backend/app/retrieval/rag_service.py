@@ -137,3 +137,91 @@ class RAGService:
                 for result in retrieval.results
             ],
         }
+
+    async def ask_stream(
+        self,
+        question: str,
+        limit: int = 5,
+        session_id: str | None = None,
+    ):
+        import json
+        
+        retrieval = None
+        if session_id:
+            try:
+                retrieval = await self.retrieval_service.search(
+                    question=question,
+                    section=None,
+                    limit=limit,
+                )
+            except Exception:
+                pass
+
+        try:
+            company = await self.company_resolver.resolve(question)
+            ticker = company["ticker"] if company else None
+        except Exception:
+            company = None
+            ticker = None
+
+        if not company and not session_id:
+            raise ValueError("Could not identify a company and no custom document provided.")
+
+        years = []
+        if company:
+            logger.info("Resolved company: %s", ticker)
+            time_range = self.time_parser.parse(question)
+            years = time_range.years
+            logger.info("Requested years: %s", years)
+            await self.ingestion_manager.ensure_company_ready(ticker=ticker, years=years)
+
+        if company:
+            retrieval = await self.retrieval_service.search(
+                question=question,
+                ticker=ticker,
+                limit=limit,
+            )
+        elif session_id:
+            raw_results = await self.retrieval_service.vector_store.search(
+                vector=await self.retrieval_service.embedding_service.embed(question),
+                where={"accession_number": session_id},
+                limit=limit,
+            )
+            from app.retrieval.models import RetrievalResult, SearchResult
+            docs = raw_results.get("documents", [[]])[0]
+            metas = raw_results.get("metadatas", [[]])[0]
+            dists = raw_results.get("distances", [[]])[0]
+            results = []
+            for d, m, dist in zip(docs, metas, dists, strict=False):
+                results.append(SearchResult(text=d, metadata=m, score=max(0.0, 1.0 - dist)))
+            retrieval = RetrievalResult(question=question, results=sorted(results, key=lambda r: r.score, reverse=True))
+
+        prompt = self.prompt_builder.build(retrieval)
+
+        sources_data = [
+            {
+                "section": result.metadata.get("section"),
+                "filing_date": result.metadata.get("filing_date"),
+                "year": result.metadata.get("year"),
+                "score": result.score,
+            }
+            for result in retrieval.results
+        ]
+
+        metadata_payload = {
+            "type": "metadata",
+            "company": company["company"] if company else None,
+            "ticker": ticker,
+            "requested_years": years,
+            "sources": sources_data
+        }
+        yield f"data: {json.dumps(metadata_payload)}\n\n"
+
+        async for chunk in self.llm_service.generate_stream(prompt):
+            chunk_payload = {
+                "type": "chunk",
+                "content": chunk
+            }
+            yield f"data: {json.dumps(chunk_payload)}\n\n"
+
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"

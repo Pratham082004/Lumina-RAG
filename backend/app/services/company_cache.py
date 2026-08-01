@@ -5,7 +5,7 @@ SEC_COMPANY_TICKERS_URL = (
     "https://www.sec.gov/files/company_tickers.json"
 )
 
-USER_AGENT = "FinRAG AI contact@example.com"
+USER_AGENT = "Lumina Finance contact@example.com"
 
 # Words that should NEVER become aliases
 STOP_WORDS = {

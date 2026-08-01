@@ -28,11 +28,11 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    print("👋 Financial RAG API shutting down.")
+    print("👋 Lumina Finance API shutting down.")
 
 
 app = FastAPI(
-    title="Financial RAG API",
+    title="Lumina Finance API",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -51,7 +51,7 @@ app.include_router(api_router)
 @app.get("/")
 async def root():
     return {
-        "message": "Financial RAG API",
+        "message": "Lumina Finance API",
         "version": "1.0.0",
         "status": "running",
         "docs": "/docs",

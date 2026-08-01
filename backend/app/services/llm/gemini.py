@@ -50,3 +50,28 @@ class GeminiLLMProvider(LLMProvider):
                     raise
 
                 await asyncio.sleep(2 ** attempt)
+
+    async def generate_stream(
+        self,
+        prompt: str,
+    ):
+        try:
+            if hasattr(self.client, "aio"):
+                response = await self.client.aio.models.generate_content_stream(
+                    model=self.model,
+                    contents=prompt,
+                )
+                async for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+            else:
+                response = self.client.models.generate_content_stream(
+                    model=self.model,
+                    contents=prompt,
+                )
+                for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+        except Exception as exc:
+            logger.warning("Streaming generation failed: %s", exc)
+            raise

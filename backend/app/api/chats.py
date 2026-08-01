@@ -13,6 +13,7 @@ from app.schemas.chats import (
     ChatRequest,
     ChatResponse,
 )
+from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +21,7 @@ router = APIRouter()
 
 @router.post(
     "/",
-    response_model=ChatResponse,
-    summary="Ask questions about SEC filings",
+    summary="Ask questions about SEC filings (Streamed)",
 )
 async def chat(
     request: ChatRequest,
@@ -34,40 +34,24 @@ async def chat(
     )
 
     try:
-
-        result = await rag_service.ask(
-            question=request.question,
-            limit=request.limit,
-            session_id=request.session_id,
+        return StreamingResponse(
+            rag_service.ask_stream(
+                question=request.question,
+                limit=request.limit,
+                session_id=request.session_id,
+            ),
+            media_type="text/event-stream",
         )
-
-        logger.info(
-            "Successfully answered question."
-        )
-
-        return ChatResponse(
-            company=result["company"],
-            ticker=result["ticker"],
-            question=result["question"],
-            answer=result["answer"],
-            sources=result["sources"],
-        )
-
     except ValueError as exc:
-
         logger.warning(str(exc))
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         )
-
     except Exception:
-
         logger.exception(
             "Unexpected error while processing chat request."
         )
-
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error.",

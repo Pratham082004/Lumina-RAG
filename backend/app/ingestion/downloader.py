@@ -15,7 +15,7 @@ from app.ingestion.filing_lookup import FilingInfo
 
 logger = logging.getLogger(__name__)
 
-USER_AGENT = "FinRAG AI (contact@example.com)"
+USER_AGENT = "Lumina Finance (contact@example.com)"
 
 
 class SECDownloader:

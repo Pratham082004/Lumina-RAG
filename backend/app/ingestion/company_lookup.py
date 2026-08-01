@@ -10,7 +10,7 @@ SEC_COMPANY_TICKERS_URL = (
 )
 
 USER_AGENT = (
-    "FinRAG AI contact@example.com"
+    "Lumina Finance contact@example.com"
 )
 
 
