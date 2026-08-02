@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip, Download } from 'lucide-react';
+import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip, Download, Settings, Edit, PanelLeftClose, Library, Folder, Clock, Puzzle, Code, MoreHorizontal, Grid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -382,21 +382,39 @@ const Dashboard: React.FC = () => {
         onDrop={handleDrop}
         style={{ 
           width: '260px', 
-          backgroundColor: isDragging ? 'rgba(255,255,255,0.05)' : 'var(--bg-secondary)', 
+          backgroundColor: isDragging ? 'rgba(255,255,255,0.05)' : '#000000', 
           display: 'flex', 
           flexDirection: 'column',
-          borderRight: isDragging ? '2px dashed var(--accent-blue)' : '1px solid var(--border-color)',
+          borderRight: 'none',
           transition: 'all 0.2s ease',
           position: 'relative'
         }}
       >
         {isDragging && (
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 10, color: 'var(--text-primary)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 10, color: 'white', backdropFilter: 'blur(4px)' }}>
             <FileText size={48} style={{ marginBottom: '1rem', color: 'var(--accent-blue)' }} />
             <p style={{ fontWeight: 500 }}>Drop file to upload</p>
           </div>
         )}
-        <div style={{ padding: '1.5rem 1rem' }}>
+        
+        {/* Top Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', color: '#ececf1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'white', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: '1rem' }}>✨</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button style={{ background: 'transparent', border: 'none', color: '#ececf1', cursor: 'pointer', padding: '0.25rem' }}>
+              <Search size={18} />
+            </button>
+            <button style={{ background: 'transparent', border: 'none', color: '#ececf1', cursor: 'pointer', padding: '0.25rem' }}>
+              <PanelLeftClose size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 0.75rem', marginBottom: '1rem' }}>
           <button 
             onClick={startNewChat}
             style={{ 
@@ -404,28 +422,56 @@ const Dashboard: React.FC = () => {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between',
-              padding: '0.75rem 1rem',
+              padding: '0.5rem 0.75rem',
               backgroundColor: 'transparent',
-              border: '1px solid var(--border-color)',
+              border: 'none',
               borderRadius: '8px',
-              color: 'var(--text-primary)',
+              color: '#ececf1',
               cursor: 'pointer',
               transition: 'all 0.2s',
             }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontWeight: 'bold', fontFamily: 'Lora, serif' }}>Lumina Finance</span>
-            </span>
-            <Plus size={18} />
+            <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>New chat</span>
+            <Edit size={16} />
           </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 1rem' }}>
+        {/* Static Links */}
+        <div style={{ padding: '0 0.75rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {[
+            { icon: <Library size={16} />, label: 'Library' },
+            { icon: <Folder size={16} />, label: 'Projects' },
+            { icon: <Clock size={16} />, label: 'Scheduled' },
+            { icon: <Puzzle size={16} />, label: 'Plugins' },
+            { icon: <Code size={16} />, label: 'Codex' },
+            { icon: <MoreHorizontal size={16} />, label: 'More' }
+          ].map((item, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', color: '#ececf1', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '8px', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+              {item.icon}
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          {/* Pinned Section */}
           <div>
-            <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>
-              Recent Chats
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8e8ea0', marginBottom: '0.5rem', paddingLeft: '0.75rem' }}>
+              Pinned
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', color: '#ececf1', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '8px', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+              <MessageSquare size={14} />
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Lumina Finance Defaults</span>
+            </div>
+          </div>
+
+          {/* Recents Section */}
+          <div>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8e8ea0', marginBottom: '0.5rem', paddingLeft: '0.75rem' }}>
+              Recents
             </h3>
             <motion.div
               initial="hidden"
@@ -447,15 +493,15 @@ const Dashboard: React.FC = () => {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '0.75rem', 
-                    padding: '0.5rem', 
-                    borderRadius: '6px', 
+                    padding: '0.5rem 0.75rem', 
+                    borderRadius: '8px', 
                     cursor: 'pointer', 
-                    color: activeSessionId === chat.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    backgroundColor: activeSessionId === chat.id ? 'rgba(255,255,255,0.05)' : 'transparent',
+                    color: activeSessionId === chat.id ? '#ececf1' : '#ececf1',
+                    backgroundColor: activeSessionId === chat.id ? '#202123' : 'transparent',
                     transition: 'background-color 0.2s ease, color 0.2s ease'
                   }}
-                  onMouseOver={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
-                  onMouseOut={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
+                  onMouseOver={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = '#202123'; } }}
+                  onMouseOut={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'transparent'; } }}
                 >
                   <MessageSquare size={14} />
                   <span style={{ fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.title}</span>
@@ -466,13 +512,14 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Profile Footer */}
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}
-               onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+        <div style={{ padding: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', cursor: 'pointer' }}
+               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'}
                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+               onClick={() => navigate('/settings')}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '0.875rem', flexShrink: 0 }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '0.75rem', flexShrink: 0 }}>
                 {user?.profileImage ? (
                   <img src={user.profileImage} alt={userName} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
@@ -480,13 +527,13 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
               <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: '0.875rem', fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userName}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{user?.jobTitle || 'Pro Plan'}</div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#ececf1', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userName}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8e8ea0', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{user?.jobTitle || 'Pro Plan'}</div>
               </div>
             </div>
-            <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', padding: '0.25rem' }}>
-              <LogOut size={16} />
-            </button>
+            <div style={{ display: 'flex', gap: '0.25rem', color: '#8e8ea0' }}>
+              <Grid size={16} />
+            </div>
           </div>
         </div>
       </div>

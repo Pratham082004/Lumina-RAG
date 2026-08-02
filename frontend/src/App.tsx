@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
+import Settings from './pages/Settings';
 
 import AnimatedBackground from './components/AnimatedBackground';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -35,6 +36,7 @@ const AnimatedRoutes = () => {
         <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
         <Route path="/onboarding" element={<PageWrapper><Onboarding /></PageWrapper>} />
         <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
+        <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
     </AnimatePresence>

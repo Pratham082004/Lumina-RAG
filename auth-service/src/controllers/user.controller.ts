@@ -39,7 +39,7 @@ export const getUserStats = async (req: Request, res: Response, next: NextFuncti
 export const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
-    const { jobTitle, company, investmentStyle } = req.body;
+    const { name, jobTitle, company, investmentStyle } = req.body;
 
     if (!userId) {
       res.status(400).json({ success: false, message: 'User ID is required' });
@@ -49,6 +49,7 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
+        name,
         jobTitle,
         company,
         investmentStyle,

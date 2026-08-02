@@ -13,6 +13,19 @@
   --success: #10b981;
 }
 
+body.light-theme {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --accent-blue: #2563eb;
+  --accent-purple: #7c3aed;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --error: #dc2626;
+  --success: #059669;
+}
+
 * {
   margin: 0;
   padding: 0;
