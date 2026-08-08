@@ -106,6 +106,8 @@ const Dashboard: React.FC = () => {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isComparisonMode, setIsComparisonMode] = useState(false);
+  const [comparisonTickers, setComparisonTickers] = useState('');
 
   // Fetch all sessions on mount
   useEffect(() => {
@@ -197,16 +199,23 @@ const Dashboard: React.FC = () => {
       setMessages(prev => [...prev, { role: 'assistant', content: '', sources: [] }]);
 
       try {
+        const payload: any = {
+          question: questionToAsk,
+          limit: 3,
+          session_id: currentSessionId
+        };
+        
+        if (isComparisonMode && comparisonTickers.trim()) {
+          payload.is_comparison = true;
+          payload.tickers = comparisonTickers.split(',').map(t => t.trim().toUpperCase()).filter(t => t);
+        }
+
         const response = await fetch('http://localhost:8000/chat/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            question: questionToAsk,
-            limit: 3,
-            session_id: currentSessionId
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!response.ok) throw new Error('Network response was not ok');
@@ -554,6 +563,21 @@ const Dashboard: React.FC = () => {
             </motion.h1>
 
             <div style={{ width: '100%', maxWidth: '768px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', gap: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  <input type="checkbox" checked={isComparisonMode} onChange={(e) => setIsComparisonMode(e.target.checked)} />
+                  Compare Mode
+                </label>
+                {isComparisonMode && (
+                  <input 
+                    type="text" 
+                    placeholder="Tickers (e.g., AAPL, MSFT)" 
+                    value={comparisonTickers} 
+                    onChange={(e) => setComparisonTickers(e.target.value)}
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}
+                  />
+                )}
+              </div>
               <div style={{ position: 'relative', marginBottom: '2rem' }}>
                 <textarea
                   value={input}
@@ -764,6 +788,21 @@ const Dashboard: React.FC = () => {
             {/* Bottom Input Area */}
             <div style={{ padding: '1rem 2rem 2rem', background: 'linear-gradient(to top, var(--bg-primary) 80%, transparent)' }}>
               <div style={{ maxWidth: '768px', margin: '0 auto', position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', gap: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    <input type="checkbox" checked={isComparisonMode} onChange={(e) => setIsComparisonMode(e.target.checked)} />
+                    Compare Mode
+                  </label>
+                  {isComparisonMode && (
+                    <input 
+                      type="text" 
+                      placeholder="Tickers (e.g., AAPL, MSFT)" 
+                      value={comparisonTickers} 
+                      onChange={(e) => setComparisonTickers(e.target.value)}
+                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}
+                    />
+                  )}
+                </div>
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}

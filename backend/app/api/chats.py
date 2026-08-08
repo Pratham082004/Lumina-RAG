@@ -39,6 +39,8 @@ async def chat(
                 question=request.question,
                 limit=request.limit,
                 session_id=request.session_id,
+                tickers=request.tickers,
+                is_comparison=request.is_comparison,
             ),
             media_type="text/event-stream",
         )

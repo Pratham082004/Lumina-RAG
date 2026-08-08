@@ -51,7 +51,12 @@ Rules for charts:
     def build(
         self,
         retrieval: RetrievalResult,
+        is_comparison: bool = False,
     ) -> str:
+
+        system_prompt_final = self.SYSTEM_PROMPT
+        if is_comparison:
+            system_prompt_final += "\nCOMPARISON INSTRUCTIONS:\n1. Format your answer as a comparative analysis.\n2. Use markdown tables to compare metrics side-by-side.\n3. When visualizing data, create a multi-series chart that plots the requested metric for all companies on the same axes.\n"
 
         context_blocks = []
 
@@ -80,7 +85,7 @@ Content:
         context = "\n".join(context_blocks)
 
         return f"""
-{self.SYSTEM_PROMPT}
+{system_prompt_final}
 
 ===========================================================
 QUESTION

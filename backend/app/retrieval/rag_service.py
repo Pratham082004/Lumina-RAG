@@ -27,6 +27,8 @@ class RAGService:
         question: str,
         limit: int = 5,
         session_id: str | None = None,
+        tickers: list[str] | None = None,
+        is_comparison: bool = False,
     ):
         
         # Check if there are custom documents for this session first
@@ -53,27 +55,40 @@ class RAGService:
         # Let's try to bypass company resolution if session_id is provided and the question might be about the document.
         try:
             company = await self.company_resolver.resolve(question)
-            ticker = company["ticker"] if company else None
+            resolved_ticker = company["ticker"] if company else None
         except Exception:
             company = None
-            ticker = None
+            resolved_ticker = None
 
-        if not company and not session_id:
+        if not company and not session_id and not tickers:
             raise ValueError("Could not identify a company and no custom document provided.")
 
         years = []
-        if company:
-            logger.info("Resolved company: %s", ticker)
+        company_name = None
+        search_ticker = None
+
+        if tickers:
+            logger.info("Explicit tickers provided: %s", tickers)
+            time_range = self.time_parser.parse(question)
+            years = time_range.years
+            for t in tickers:
+                await self.ingestion_manager.ensure_company_ready(ticker=t, years=years)
+            search_ticker = tickers
+            company_name = ", ".join(tickers)
+        elif company:
+            logger.info("Resolved company: %s", resolved_ticker)
             time_range = self.time_parser.parse(question)
             years = time_range.years
             logger.info("Requested years: %s", years)
-            await self.ingestion_manager.ensure_company_ready(ticker=ticker, years=years)
+            await self.ingestion_manager.ensure_company_ready(ticker=resolved_ticker, years=years)
+            search_ticker = resolved_ticker
+            company_name = company["company"]
 
         # Retrieval
-        if company:
+        if search_ticker:
             retrieval = await self.retrieval_service.search(
                 question=question,
-                ticker=ticker,
+                ticker=search_ticker,
                 limit=limit,
             )
         elif session_id:
@@ -100,7 +115,8 @@ class RAGService:
         # --------------------------------------------------
 
         prompt = self.prompt_builder.build(
-            retrieval
+            retrieval,
+            is_comparison=is_comparison
         )
 
         # --------------------------------------------------
@@ -116,8 +132,8 @@ class RAGService:
         # --------------------------------------------------
 
         return {
-            "company": company["company"],
-            "ticker": ticker,
+            "company": company_name,
+            "ticker": search_ticker,
             "question": question,
             "requested_years": years,
             "answer": answer,
@@ -143,6 +159,8 @@ class RAGService:
         question: str,
         limit: int = 5,
         session_id: str | None = None,
+        tickers: list[str] | None = None,
+        is_comparison: bool = False,
     ):
         import json
         
@@ -159,26 +177,39 @@ class RAGService:
 
         try:
             company = await self.company_resolver.resolve(question)
-            ticker = company["ticker"] if company else None
+            resolved_ticker = company["ticker"] if company else None
         except Exception:
             company = None
-            ticker = None
+            resolved_ticker = None
 
-        if not company and not session_id:
+        if not company and not session_id and not tickers:
             raise ValueError("Could not identify a company and no custom document provided.")
 
         years = []
-        if company:
-            logger.info("Resolved company: %s", ticker)
+        company_name = None
+        search_ticker = None
+
+        if tickers:
+            logger.info("Explicit tickers provided: %s", tickers)
+            time_range = self.time_parser.parse(question)
+            years = time_range.years
+            for t in tickers:
+                await self.ingestion_manager.ensure_company_ready(ticker=t, years=years)
+            search_ticker = tickers
+            company_name = ", ".join(tickers)
+        elif company:
+            logger.info("Resolved company: %s", resolved_ticker)
             time_range = self.time_parser.parse(question)
             years = time_range.years
             logger.info("Requested years: %s", years)
-            await self.ingestion_manager.ensure_company_ready(ticker=ticker, years=years)
+            await self.ingestion_manager.ensure_company_ready(ticker=resolved_ticker, years=years)
+            search_ticker = resolved_ticker
+            company_name = company["company"]
 
-        if company:
+        if search_ticker:
             retrieval = await self.retrieval_service.search(
                 question=question,
-                ticker=ticker,
+                ticker=search_ticker,
                 limit=limit,
             )
         elif session_id:
@@ -196,7 +227,7 @@ class RAGService:
                 results.append(SearchResult(text=d, metadata=m, score=max(0.0, 1.0 - dist)))
             retrieval = RetrievalResult(question=question, results=sorted(results, key=lambda r: r.score, reverse=True))
 
-        prompt = self.prompt_builder.build(retrieval)
+        prompt = self.prompt_builder.build(retrieval, is_comparison=is_comparison)
 
         sources_data = [
             {
@@ -210,8 +241,8 @@ class RAGService:
 
         metadata_payload = {
             "type": "metadata",
-            "company": company["company"] if company else None,
-            "ticker": ticker,
+            "company": company_name,
+            "ticker": search_ticker,
             "requested_years": years,
             "sources": sources_data
         }

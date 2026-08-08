@@ -21,7 +21,7 @@ class RetrievalService:
     async def search(
         self,
         question: str,
-        ticker: str | None = None,
+        ticker: str | list[str] | None = None,
         years: list[int] | None = None,
         filing_type: str | None = None,
         section: str | None = None,
@@ -52,7 +52,12 @@ class RetrievalService:
         where = {}
 
         if ticker:
-            where["ticker"] = ticker
+            if isinstance(ticker, str):
+                where["ticker"] = ticker
+            elif len(ticker) == 1:
+                where["ticker"] = ticker[0]
+            else:
+                where["ticker"] = {"$in": ticker}
 
         if years:
 
