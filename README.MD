@@ -579,6 +579,7 @@ The system includes proper User-Agent headers and respects SEC rate limits.
 - Google OAuth 2.0
 - Email verification & password reset
 - Chat session history
+- Interactive stock ticker mentions (hover for real-time chart)
 
 ### 🔜 Planned
 - Qdrant vector store support (foundation code exists)
@@ -586,7 +587,6 @@ The system includes proper User-Agent headers and respects SEC rate limits.
 - 10-Q (quarterly) filing support
 - Real-time SEC feed monitoring
 - Advanced analytics dashboard
-- Interactive stock ticker mentions
 
 ---
 
