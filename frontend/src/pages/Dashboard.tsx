@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import StockTickerPill from '../components/StockTickerPill';
 import {
   BarChart, Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
@@ -696,10 +697,17 @@ const Dashboard: React.FC = () => {
                                 }
                               }
                               return <code className={className} {...props}>{children}</code>;
+                            },
+                            a({node, href, children, ...props}: any) {
+                              if (href && href.startsWith('ticker:')) {
+                                const ticker = href.split(':')[1];
+                                return <StockTickerPill ticker={ticker} />;
+                              }
+                              return <a href={href} {...props}>{children}</a>;
                             }
                           }}
                         >
-                          {msg.content}
+                          {msg.content.replace(/\$([A-Z]{1,5})\b/g, '[$1](ticker:$1)')}
                         </ReactMarkdown>
                       </div>
                       {msg.sources && msg.sources.length > 0 && (
