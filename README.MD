@@ -293,7 +293,31 @@ Upload a custom PDF or text document. The document is chunked, embedded, and vec
 
 ## Setup Instructions
 
-### Prerequisites
+### Option A: Using Docker (Recommended)
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd rag-fin
+```
+2. **Configure Environment Variables**
+Ensure you provide your `GEMINI_API_KEY` and other sensitive variables (like Google OAuth credentials) via `.env` files or environment variables. Standard database and port configurations are handled automatically.
+
+3. **Run with Docker Compose**
+```bash
+docker-compose up --build
+```
+This will spin up:
+- **Frontend**: `http://localhost:80`
+- **Backend API**: `http://localhost:8000`
+- **Auth Service**: `http://localhost:4000`
+- **PostgreSQL**: port `5432`
+
+---
+
+### Option B: Manual Local Setup
+
+#### Prerequisites
 
 - Python 3.11+
 - Node.js 20+
@@ -301,7 +325,7 @@ Upload a custom PDF or text document. The document is chunked, embedded, and vec
 - A Google Gemini API key
 - (Optional) Google OAuth 2.0 client credentials for Google login
 
-### 1. Clone & Environment
+#### 1. Clone & Environment
 
 ```bash
 git clone <repository-url>
@@ -580,10 +604,10 @@ The system includes proper User-Agent headers and respects SEC rate limits.
 - Email verification & password reset
 - Chat session history
 - Interactive stock ticker mentions (hover for real-time chart)
+- Multi-company comparison queries (comparative tables and multi-series charts)
 
 ### 🔜 Planned
 - Qdrant vector store support (foundation code exists)
-- Multi-company comparison queries
 - 10-Q (quarterly) filing support
 - Real-time SEC feed monitoring
 - Advanced analytics dashboard
