@@ -1,0 +1,9 @@
+# Ignore generated files and storage from GitHub language statistics
+backend/storage/** linguist-generated=true
+backend/storage/** export-ignore
+
+# Frontend files
+*.ts linguist-detectable=true
+*.tsx linguist-detectable=true
+*.js linguist-detectable=true
+*.css linguist-detectable=true
