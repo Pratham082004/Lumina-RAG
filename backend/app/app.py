@@ -19,16 +19,16 @@ async def lifespan(app: FastAPI):
     try:
         await cache.load()
         print(
-            f"✅ Loaded {len(cache.company_records)} SEC companies."
+            f"Loaded {len(cache.company_records)} SEC companies."
         )
     except Exception as exc:
-        print(f"❌ Failed to load SEC company cache: {exc}")
+        print(f"Failed to load SEC company cache: {exc}")
         raise
 
     yield
 
     # Shutdown
-    print("👋 Lumina Finance API shutting down.")
+    print("Lumina Finance API shutting down.")
 
 
 app = FastAPI(

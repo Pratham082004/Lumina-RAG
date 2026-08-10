@@ -30,18 +30,20 @@ const Onboarding: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.put(`http://localhost:4000/api/auth/profile/${user.id}`, {
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${authUrl}/profile/${user.id}`, {
         jobTitle,
         company,
         investmentStyle
       });
-      if (res.data.success) {
-        localStorage.setItem('user', JSON.stringify(res.data.data.user));
+      if (res.status === 200 || res.data) {
+        localStorage.setItem('user', JSON.stringify({ ...user, ...res.data }));
         navigate('/dashboard');
       }
     } catch (err: any) {
       console.error('Profile update error:', err);
-      setError(err.response?.data?.message || 'Failed to update profile');
+      setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }

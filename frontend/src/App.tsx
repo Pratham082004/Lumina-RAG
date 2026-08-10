@@ -6,6 +6,7 @@ import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
+import Verify from './pages/Verify';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 import Settings from './pages/Settings';
@@ -35,6 +36,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
         <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
         <Route path="/onboarding" element={<PageWrapper><Onboarding /></PageWrapper>} />
+        <Route path="/verify" element={<PageWrapper><Verify /></PageWrapper>} />
         <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
         <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />

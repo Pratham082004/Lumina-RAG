@@ -50,21 +50,22 @@ const Settings: React.FC = () => {
     setMessage({ type: '', text: '' });
     
     try {
-      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:4000';
-      const res = await axios.put(`${authUrl}/api/auth/profile/${user.id}`, {
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${authUrl}/profile/${user.id}`, {
         name: formData.name,
         jobTitle: formData.jobTitle,
         company: formData.company,
         investmentStyle: formData.investmentStyle,
       });
 
-      if (res.data.success) {
-        localStorage.setItem('user', JSON.stringify({ ...user, ...res.data.data.user }));
+      if (res.status === 200 || res.data) {
+        localStorage.setItem('user', JSON.stringify({ ...user, ...res.data }));
         setMessage({ type: 'success', text: 'Settings saved successfully!' });
         setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       }
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to save settings.' });
+      setMessage({ type: 'error', text: err.response?.data?.detail || err.response?.data?.message || 'Failed to save settings.' });
     } finally {
       setIsLoading(false);
     }

@@ -157,7 +157,7 @@ class CompanyCache:
 
         self.loaded = True
 
-        print(f"✅ Loaded {len(self.company_records)} SEC companies.")
-        print(f"✅ Built {len(self.aliases)} aliases.")
+        print(f"Loaded {len(self.company_records)} SEC companies.")
+        print(f"Built {len(self.aliases)} aliases.")
         print("Apple alias:", self.aliases.get("apple"))
         print("Alias 'are':", self.aliases.get("are"))

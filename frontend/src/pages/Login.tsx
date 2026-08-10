@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
@@ -19,14 +19,15 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post('http://localhost:4000/api/auth/login', {
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const res = await axios.post(`${authUrl}/auth/login`, {
         email,
         password
       });
-      if (res.data.success) {
-        localStorage.setItem('user', JSON.stringify(res.data.data.user));
-        localStorage.setItem('token', res.data.data.accessToken);
-        if (res.data.data.user.onboardingCompleted) {
+      if (res.status === 200 || res.data.access_token) {
+        localStorage.setItem('user', JSON.stringify({ id: res.data.user_id, name: res.data.name, email: res.data.email, onboardingCompleted: res.data.onboardingCompleted }));
+        localStorage.setItem('token', res.data.access_token);
+        if (res.data.onboardingCompleted) {
           navigate('/dashboard');
         } else {
           navigate('/onboarding');
@@ -34,7 +35,12 @@ const Login: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Failed to login');
+      const errorDetail = err.response?.data?.detail;
+      if (errorDetail === 'Email not verified') {
+        navigate(`/verify?email=${encodeURIComponent(email)}`);
+        return;
+      }
+      setError(errorDetail || err.response?.data?.message || 'Failed to login');
     } finally {
       setIsLoading(false);
     }
@@ -129,13 +135,14 @@ const Login: React.FC = () => {
               onSuccess={async (credentialResponse) => {
                 console.log("Google Login Success");
                 try {
-                  const res = await axios.post('http://localhost:4000/api/auth/google', {
+                  const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+                  const res = await axios.post(`${authUrl}/auth/google`, {
                     token: credentialResponse.credential
                   });
-                  if (res.data.success) {
-                    localStorage.setItem('user', JSON.stringify(res.data.data.user));
-                    localStorage.setItem('token', res.data.data.accessToken);
-                    if (res.data.data.user.onboardingCompleted) {
+                  if (res.status === 200 || res.data.access_token) {
+                    localStorage.setItem('user', JSON.stringify({ id: res.data.user_id, name: res.data.name, email: res.data.email, onboardingCompleted: res.data.onboardingCompleted }));
+                    localStorage.setItem('token', res.data.access_token);
+                    if (res.data.onboardingCompleted) {
                       navigate('/dashboard');
                     } else {
                       navigate('/onboarding');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip, Download, Settings, Edit, PanelLeftClose, Library, Folder, Clock, Puzzle, Code, MoreHorizontal, Grid } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LogOut, Plus, MessageSquare, Search, BarChart2, FileText, Send, User, Pin, Paperclip, Download, Settings, Edit, PanelLeftClose, Library, Folder, Clock, Puzzle, Code, MoreHorizontal, Grid, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -108,6 +108,14 @@ const Dashboard: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonTickers, setComparisonTickers] = useState('');
+  const [showPinned, setShowPinned] = useState(true);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdownId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Fetch all sessions on mount
   useEffect(() => {
@@ -118,9 +126,10 @@ const Dashboard: React.FC = () => {
 
   const fetchSessions = async () => {
     try {
-      const res = await axios.get(`http://localhost:4000/api/auth/history/${user.id}`);
-      if (res.data.success) {
-        setSessions(res.data.data);
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const res = await axios.get(`${authUrl}/history/${user.id}`);
+      if (res.status === 200 || Array.isArray(res.data)) {
+        setSessions(res.data);
       }
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
@@ -130,12 +139,27 @@ const Dashboard: React.FC = () => {
   const loadSession = async (sessionId: string) => {
     try {
       setActiveSessionId(sessionId);
-      const res = await axios.get(`http://localhost:4000/api/auth/history/session/${sessionId}`);
-      if (res.data.success) {
-        setMessages(res.data.data.messages);
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const res = await axios.get(`${authUrl}/history/session/${sessionId}`);
+      if (res.status === 200 || Array.isArray(res.data)) {
+        setMessages(res.data);
       }
     } catch (error) {
       console.error('Failed to load session:', error);
+    }
+  };
+
+  const deleteSession = async (sessionId: string) => {
+    try {
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      if (activeSessionId === sessionId) {
+        startNewChat();
+      }
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      await axios.delete(`${authUrl}/history/session/${sessionId}`);
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+      fetchSessions();
     }
   };
 
@@ -177,8 +201,9 @@ const Dashboard: React.FC = () => {
       // 1. Create a new session if one doesn't exist
       if (!currentSessionId) {
         const title = questionToAsk.substring(0, 30) + (questionToAsk.length > 30 ? '...' : '');
-        const resSession = await axios.post(`http://localhost:4000/api/auth/history/${user.id}`, { title });
-        currentSessionId = resSession.data.data.id;
+        const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+        const resSession = await axios.post(`${authUrl}/history/${user.id}`, { title });
+        currentSessionId = resSession.data.id;
         setActiveSessionId(currentSessionId);
         
         // Optimistically update sessions list
@@ -186,7 +211,8 @@ const Dashboard: React.FC = () => {
       }
 
       // 2. Save User Message to DB
-      await axios.post(`http://localhost:4000/api/auth/history/session/${currentSessionId}/message`, {
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      await axios.post(`${authUrl}/history/session/${currentSessionId}/message`, {
         role: 'user',
         content: questionToAsk
       });
@@ -272,7 +298,7 @@ const Dashboard: React.FC = () => {
       }
 
       // 4. Save Assistant Message to DB
-      await axios.post(`http://localhost:4000/api/auth/history/session/${currentSessionId}/message`, {
+      await axios.post(`${authUrl}/history/session/${currentSessionId}/message`, {
         role: 'assistant',
         content: assistantResponse,
         sources
@@ -292,8 +318,9 @@ const Dashboard: React.FC = () => {
     let currentSessionId = activeSessionId;
     if (!currentSessionId) {
       const title = `Analysis: ${file.name}`;
-      const resSession = await axios.post(`http://localhost:4000/api/auth/history/${user.id}`, { title });
-      currentSessionId = resSession.data.data.id;
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const resSession = await axios.post(`${authUrl}/history/${user.id}`, { title });
+      currentSessionId = resSession.data.id;
       setActiveSessionId(currentSessionId);
       setSessions([{ id: currentSessionId!, title, updatedAt: new Date().toISOString() }, ...sessions]);
     }
@@ -384,7 +411,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Sidebar */}
       <div 
         onDragOver={handleDragOver}
@@ -448,35 +475,48 @@ const Dashboard: React.FC = () => {
           </button>
         </div>
 
-        {/* Static Links */}
-        <div style={{ padding: '0 0.75rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {[
-            { icon: <Library size={16} />, label: 'Library' },
-            { icon: <Folder size={16} />, label: 'Projects' },
-            { icon: <Clock size={16} />, label: 'Scheduled' },
-            { icon: <Puzzle size={16} />, label: 'Plugins' },
-            { icon: <Code size={16} />, label: 'Codex' },
-            { icon: <MoreHorizontal size={16} />, label: 'More' }
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', color: '#ececf1', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '8px', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-              {item.icon}
-              <span>{item.label}</span>
-            </div>
-          ))}
-        </div>
+
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Pinned Section */}
+          {showPinned && (
           <div>
             <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8e8ea0', marginBottom: '0.5rem', paddingLeft: '0.75rem' }}>
               Pinned
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', color: '#ececf1', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '8px', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-              <MessageSquare size={14} />
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Lumina Finance Defaults</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', color: '#ececf1', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '8px', transition: 'all 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#202123'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                <MessageSquare size={14} style={{ flexShrink: 0 }} />
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Lumina Finance Defaults</span>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <div 
+                  onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === 'pinned' ? null : 'pinned'); }} 
+                  style={{ cursor: 'pointer', color: '#8e8ea0', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <MoreHorizontal size={14} />
+                </div>
+                <AnimatePresence>
+                {openDropdownId === 'pinned' && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.1 }}
+                    style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: '#202123', border: '1px solid #3F3F46', borderRadius: '8px', padding: '4px', zIndex: 100, minWidth: '120px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                  >
+                    <div onClick={(e) => { e.stopPropagation(); setShowPinned(false); setOpenDropdownId(null); }} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '4px', color: '#ececf1' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>Unpin</div>
+                    <div onClick={(e) => { e.stopPropagation(); setShowPinned(false); setOpenDropdownId(null); }} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '4px', color: '#ef4444' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>Delete</div>
+                  </motion.div>
+                )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
+          )}
 
           {/* Recents Section */}
           <div>
@@ -502,7 +542,7 @@ const Dashboard: React.FC = () => {
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
-                    gap: '0.75rem', 
+                    justifyContent: 'space-between',
                     padding: '0.5rem 0.75rem', 
                     borderRadius: '8px', 
                     cursor: 'pointer', 
@@ -513,8 +553,35 @@ const Dashboard: React.FC = () => {
                   onMouseOver={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = '#202123'; } }}
                   onMouseOut={(e) => { if(activeSessionId !== chat.id) { e.currentTarget.style.backgroundColor = 'transparent'; } }}
                 >
-                  <MessageSquare size={14} />
-                  <span style={{ fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.title}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                    <MessageSquare size={14} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.title}</span>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === chat.id ? null : chat.id); }} 
+                      style={{ cursor: 'pointer', color: '#8e8ea0', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <MoreHorizontal size={14} />
+                    </div>
+                    <AnimatePresence>
+                    {openDropdownId === chat.id && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.1 }}
+                        style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: '#202123', border: '1px solid #3F3F46', borderRadius: '8px', padding: '4px', zIndex: 100, minWidth: '120px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                      >
+                        <div onClick={(e) => { e.stopPropagation(); setOpenDropdownId(null); }} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '4px', color: '#ececf1' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>Pin</div>
+                        <div onClick={(e) => { e.stopPropagation(); setOpenDropdownId(null); }} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '4px', color: '#ececf1' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>Rename</div>
+                        <div onClick={(e) => { e.stopPropagation(); deleteSession(chat.id); setOpenDropdownId(null); }} style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer', borderRadius: '4px', color: '#ef4444' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>Delete</div>
+                      </motion.div>
+                    )}
+                    </AnimatePresence>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>

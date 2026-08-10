@@ -53,6 +53,21 @@ class Settings(BaseSettings):
     CHROMA_COLLECTION: str = "financial_rag"
     VECTOR_SIZE: int = 3072
 
+    # ==========================================================
+    # Auth & Email
+    # ==========================================================
+    JWT_ACCESS_SECRET: str = "super_secret_access_key"
+    JWT_REFRESH_SECRET: str = "super_secret_refresh_key"
+    JWT_ACCESS_EXPIRES_MINUTES: int = 15
+    JWT_REFRESH_EXPIRES_DAYS: int = 7
+    GOOGLE_CLIENT_ID: str = ""
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    EMAIL_HOST: str = "smtp.gmail.com"
+    EMAIL_PORT: int = 587
+    EMAIL_USER: str = ""
+    EMAIL_PASS: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

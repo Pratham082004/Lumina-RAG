@@ -26,17 +26,18 @@ const Register: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const res = await axios.post('http://localhost:4000/api/auth/register', {
+      const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const res = await axios.post(`${authUrl}/auth/register`, {
         name,
         email,
         password
       });
-      if (res.data.success) {
-        navigate('/login');
+      if (res.status === 201 || res.data) {
+        navigate(`/verify?email=${encodeURIComponent(email)}`);
       }
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.message || 'Failed to register');
+      setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to register');
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +164,8 @@ const Register: React.FC = () => {
               onSuccess={async (credentialResponse) => {
                 console.log("Google Signup Success");
                 try {
-                  const res = await axios.post('http://localhost:4000/api/auth/google', {
+                  const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+                  const res = await axios.post(`${authUrl}/auth/google`, {
                     token: credentialResponse.credential
                   });
                   if (res.data.success) {

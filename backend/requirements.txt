@@ -13,3 +13,7 @@ lxml
 chromadb
 pytest
 pytest-asyncio
+passlib[bcrypt]
+python-jose[cryptography]
+fastapi-mail
+google-auth
