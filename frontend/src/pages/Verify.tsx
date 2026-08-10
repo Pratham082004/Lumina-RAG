@@ -171,7 +171,7 @@ const Verify: React.FC = () => {
       </div>
 
       {/* Right Image Section */}
-      <div style={{ flex: 1, display: 'flex', padding: '1.5rem', background: 'var(--bg-primary)' }}>
+      <div className="hide-mobile" style={{ flex: 1, display: 'flex', padding: '1.5rem', background: 'var(--bg-primary)' }}>
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}

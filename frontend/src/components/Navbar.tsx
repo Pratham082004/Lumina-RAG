@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
             <span style={{ fontSize: '1.25rem' }}>L</span>
           </div>
-          <h2 className="text-gradient" style={{ fontSize: '1.5rem', margin: 0, letterSpacing: '0.5px' }}>Lumina Finance</h2>
+          <span className="text-gradient" style={{ fontSize: '1.25rem', fontFamily: 'Outfit, sans-serif', fontWeight: 600, letterSpacing: '-0.01em' }}>Lumina Finance</span>
         </Link>
 
         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: '2rem' }}>
