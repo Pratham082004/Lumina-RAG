@@ -2,8 +2,14 @@ from pathlib import Path
 import json
 import logging
 
+# pyrefly: ignore [missing-import]
 from bs4 import BeautifulSoup
+from bs4.builder import XMLParsedAsHTMLWarning
+import warnings 
 
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+# pyrefly: ignore [missing-import]
 from app.ingestion.extractor import SectionExtractor
 from app.schemas.parsed_filing import ParsedFiling
 

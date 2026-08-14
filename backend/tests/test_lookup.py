@@ -30,12 +30,13 @@ from pathlib import Path
 
 from app.ingestion.parser import FilingParser
 
-parser = FilingParser()
+if __name__ == "__main__":
+    parser = FilingParser()
 
-text = parser.parse(
-    Path(
-        "storage/reports/AAPL/2025/10-K/000032019325000079/filing.html"
+    parsed_filing = parser.parse(
+        Path(
+            "storage/reports/AAPL/2025/10-K/000032019325000079/filing.html"
+        )
     )
-)
 
-print(text[:5000])
+    print(parsed_filing.raw_text[:5000])
