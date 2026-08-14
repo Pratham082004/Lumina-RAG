@@ -17,3 +17,4 @@ passlib[bcrypt]
 python-jose[cryptography]
 fastapi-mail
 google-auth
+pytest-mock
