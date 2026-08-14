@@ -61,6 +61,8 @@ jobs:
         JWT_ACCESS_SECRET: test_secret
         JWT_REFRESH_SECRET: test_secret
         GEMINI_API_KEY: mock_key
+        APP_NAME: "Lumina-RAG" 
+        REPORT_STORAGE: "storage/reports"
       run: pytest
 
   deploy-to-render:
