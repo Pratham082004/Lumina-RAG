@@ -1,52 +1,44 @@
+import json
 from pathlib import Path
 
 from app.ingestion.parser import FilingParser
 
-
-def main():
+def test_filing_parser(tmp_path):
     parser = FilingParser()
 
-    html_path = Path(
-        "storage/reports/AAPL/2025/10-K/000032019325000079/filing.html"
-    )
+    # Create dummy metadata and html
+    metadata = {
+        "company": "Apple Inc",
+        "ticker": "AAPL",
+        "form": "10-K",
+        "filing_date": "2025-01-01"
+    }
+    
+    html_content = """
+    <html>
+        <body>
+            <h1>Item 1. Business</h1>
+            <p>We sell phones.</p>
+            <h1>Item 1A. Risk Factors</h1>
+            <p>Phones might break.</p>
+        </body>
+    </html>
+    """
+
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(json.dumps(metadata))
+
+    html_path = tmp_path / "filing.html"
+    html_path.write_text(html_content)
 
     parsed = parser.parse(html_path)
 
-    print("=" * 80)
-    print("Title:")
-    print(parsed.title)
-
-    print("\nCompany:")
-    print(parsed.company)
-
-    print("\nTicker:")
-    print(parsed.ticker)
-
-    print("\nForm:")
-    print(parsed.filing_type)
-
-    print("\nFiling Date:")
-    print(parsed.filing_date)
-
-    print("\nNumber of Sections:")
-    print(len(parsed.sections))
-
-    print("\n" + "=" * 80)
-    print("Sections Found")
-    print("=" * 80)
-
-    for i, section in enumerate(parsed.sections, start=1):
-        print(f"\n{i}. {section.title}")
-        print("-" * 60)
-        print(section.content[:300])
-        print()
-
-    print("=" * 80)
-    print("Raw Text Preview")
-    print("=" * 80)
-
-    print(parsed.raw_text[:3000])
-
-
-if __name__ == "__main__":
-    main()
+    assert parsed.title == "Apple Inc 10-K"
+    assert parsed.company == "Apple Inc"
+    assert parsed.ticker == "AAPL"
+    assert parsed.filing_type == "10-K"
+    assert parsed.filing_date == "2025-01-01"
+    
+    # Assert some text was extracted
+    assert "We sell phones." in parsed.raw_text
+    assert "Phones might break." in parsed.raw_text

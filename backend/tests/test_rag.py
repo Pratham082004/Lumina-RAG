@@ -1,51 +1,68 @@
-import asyncio
+import pytest
 
 from app.retrieval.rag_service import RAGService
-from app.retrieval.search import RetrievalService
-from app.services.embeddings.gemini import GeminiEmbeddingProvider
-from app.services.llm.gemini import GeminiLLMProvider
-from app.services.vector_store.chroma import ChromaService
+from app.retrieval.models import RetrievalResult, SearchResult
 
-
-async def main():
-
-    embedding_service = GeminiEmbeddingProvider()
-    vector_store = ChromaService()
-    llm_service = GeminiLLMProvider()
-
-    retrieval_service = RetrievalService(
-        embedding_service=embedding_service,
-        vector_store=vector_store,
+@pytest.mark.asyncio
+async def test_rag_service(mocker):
+    # Mock retrieval service
+    mock_retrieval_service = mocker.MagicMock()
+    mock_retrieval_result = RetrievalResult(
+        question="What are Apple's biggest business?",
+        results=[
+            SearchResult(
+                text="Apple makes a lot of money from iPhones.",
+                metadata={"section": "Business", "ticker": "AAPL", "year": "2024"},
+                score=0.95
+            ),
+            SearchResult(
+                text="Services are also a huge part of Apple's revenue.",
+                metadata={"section": "Business", "ticker": "AAPL", "year": "2024"},
+                score=0.85
+            )
+        ]
     )
+    mock_retrieval_service.search = mocker.AsyncMock(return_value=mock_retrieval_result)
+    
+    # Mock LLM service
+    mock_llm_service = mocker.MagicMock()
+    mock_llm_service.generate = mocker.AsyncMock(return_value="Apple's biggest businesses are iPhones and Services.")
+
+    # Mock company resolver
+    mock_company_resolver = mocker.MagicMock()
+    mock_company_resolver.resolve = mocker.AsyncMock(return_value={"ticker": "AAPL", "company": "Apple Inc."})
+
+    # Mock ingestion manager
+    mock_ingestion_manager = mocker.MagicMock()
+    mock_ingestion_manager.ensure_company_ready = mocker.AsyncMock()
 
     rag = RAGService(
-        retrieval_service=retrieval_service,
-        llm_service=llm_service,
+        retrieval_service=mock_retrieval_service,
+        llm_service=mock_llm_service,
+        company_resolver=mock_company_resolver,
+        ingestion_manager=mock_ingestion_manager,
     )
 
     result = await rag.ask(
         question="What are Apple's biggest business?",
-        ticker="AAPL",
+        tickers=["AAPL"],
         limit=5,
     )
-
-    print("=" * 80)
-    print("QUESTION")
-    print("=" * 80)
-    print(result["question"])
-
-    print("\n" + "=" * 80)
-    print("ANSWER")
-    print("=" * 80)
-    print(result["answer"])
-
-    print("\n" + "=" * 80)
-    print("SOURCES")
-    print("=" * 80)
-
-    for source in result["sources"]:
-        print(source)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    
+    # Verify the result structure
+    assert result["question"] == "What are Apple's biggest business?"
+    assert result["answer"] == "Apple's biggest businesses are iPhones and Services."
+    assert len(result["sources"]) == 2
+    
+    # Verify the sources list is correctly populated
+    assert result["sources"][0]["section"] == "Business"
+    assert result["sources"][0]["score"] == 0.95
+    
+    # Verify the internal service calls
+    mock_retrieval_service.search.assert_called_once_with(
+        question="What are Apple's biggest business?",
+        ticker=["AAPL"],
+        limit=5
+    )
+    
+    mock_llm_service.generate.assert_called_once()

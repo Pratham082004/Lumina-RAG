@@ -1,42 +1,60 @@
-"""from app.ingestion.company_lookup import SECCompanyLookup
+import pytest
+from pathlib import Path
+
+from app.ingestion.company_lookup import SECCompanyLookup, CompanyInfo
 from app.ingestion.filing_lookup import SECFilingLookup
 from app.ingestion.downloader import SECDownloader
 
 
-def main():
-    company_lookup = SECCompanyLookup()
-    filing_lookup = SECFilingLookup()
-
-    company = company_lookup.search("Apple")
-    print(f"Company: {company.name} ({company.ticker})")
-
-    filing = filing_lookup.latest_filing(company.cik)
-    print(f"Latest Filing: {filing.form} ({filing.filing_date})")
-
-    with SECDownloader() as downloader:
-        path = downloader.download(
-            company=company,
-            filing=filing,
-        )
-
-    print(f"\nDownloaded to: {path}")
-
-
-if __name__ == "__main__":
-    main()
-    """
-
-from pathlib import Path
-
-from app.ingestion.parser import FilingParser
-
-if __name__ == "__main__":
-    parser = FilingParser()
-
-    parsed_filing = parser.parse(
-        Path(
-            "storage/reports/AAPL/2025/10-K/000032019325000079/filing.html"
-        )
+@pytest.mark.asyncio
+async def test_sec_lookups(mocker):
+    # Mock CompanyInfo
+    mock_company = CompanyInfo(cik="0000320193", ticker="AAPL", name="Apple Inc.")
+    
+    # Mock SECCompanyLookup
+    mocker.patch.object(
+        SECCompanyLookup, 
+        "search", 
+        return_value=mock_company
     )
 
-    print(parsed_filing.raw_text[:5000])
+    company_lookup = SECCompanyLookup()
+    company = await company_lookup.search("Apple")
+
+    assert company is not None
+    assert company.ticker == "AAPL"
+    assert company.name == "Apple Inc."
+
+    # Mock SECFilingLookup
+    mock_filing = mocker.MagicMock()
+    mock_filing.form = "10-K"
+    mock_filing.filing_date = "2025-01-01"
+
+    mocker.patch.object(
+        SECFilingLookup,
+        "latest_filing",
+        return_value=mock_filing
+    )
+
+    filing_lookup = SECFilingLookup()
+    filing = await filing_lookup.latest_filing(company.cik)
+
+    assert filing is not None
+    assert filing.form == "10-K"
+    assert filing.filing_date == "2025-01-01"
+
+    # Mock SECDownloader
+    mocker.patch.object(
+        SECDownloader,
+        "download",
+        new_callable=mocker.AsyncMock,
+        return_value=Path("/mocked/path/filing.html")
+    )
+
+    downloader = SECDownloader()
+    path = await downloader.download(
+        company=company,
+        filing=filing,
+    )
+
+    assert path.as_posix() == "/mocked/path/filing.html"
