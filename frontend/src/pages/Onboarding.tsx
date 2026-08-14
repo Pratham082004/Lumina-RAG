@@ -31,7 +31,7 @@ const Onboarding: React.FC = () => {
 
     try {
       const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
-      const token = localStorage.getItem('token');
+
       const res = await axios.put(`${authUrl}/profile/${user.id}`, {
         jobTitle,
         company,

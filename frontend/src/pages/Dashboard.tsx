@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, MessageSquare, Search, BarChart2, FileText, Send, User, Paperclip, Download, Edit, PanelLeftClose, PanelLeftOpen, MoreHorizontal, Trash2, ChevronDown, TrendingUp, Globe, Sparkles, Briefcase } from 'lucide-react';
+import { LogOut, MessageSquare, Search, BarChart2, FileText, Send, User, Paperclip, Download, Edit, PanelLeftClose, PanelLeftOpen, MoreHorizontal, ChevronDown, TrendingUp, Globe, Sparkles, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -52,10 +52,10 @@ const ChartRenderer = ({ data }: { data: any }) => {
               cx="50%"
               cy="50%"
               outerRadius={100}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
               labelLine={false}
             >
-              {data.data.map((entry: any, index: number) => (
+              {data.data.map((_entry: any, index: number) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>

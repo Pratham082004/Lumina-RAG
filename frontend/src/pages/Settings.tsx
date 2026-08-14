@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Briefcase, Settings as SettingsIcon, Bell, Moon, Sun, Save, ArrowLeft, Key } from 'lucide-react';
+import { User, Briefcase, Settings as SettingsIcon, Moon, Sun, Save, ArrowLeft, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -51,7 +51,7 @@ const Settings: React.FC = () => {
     
     try {
       const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
-      const token = localStorage.getItem('token');
+
       const res = await axios.put(`${authUrl}/profile/${user.id}`, {
         name: formData.name,
         jobTitle: formData.jobTitle,

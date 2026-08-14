@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
-import { Target, Users, BookOpen } from 'lucide-react';
+import { Target, BookOpen } from 'lucide-react';
 
 const About: React.FC = () => {
   return (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Mail, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import illustration from '../assets/images/auth_illustration.png';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
 
@@ -18,7 +18,7 @@ const StockTickerPill: React.FC<StockTickerPillProps> = ({ ticker }) => {
   const [data, setData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchStockData = async () => {
     if (data || loading) return;
