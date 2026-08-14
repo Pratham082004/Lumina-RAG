@@ -1,0 +1,79 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: './backend/requirements.txt'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Tests with pytest
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: test_user
+        DB_PASSWORD: test_password
+        DB_NAME: test_db
+        # Mock other necessary env vars for tests
+        JWT_ACCESS_SECRET: test_secret
+        JWT_REFRESH_SECRET: test_secret
+        GEMINI_API_KEY: mock_key
+      run: pytest
+
+  deploy-to-render:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL is not set. Skipping deployment."
+          else
+            curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "Render deployment triggered successfully!"
+          fi
