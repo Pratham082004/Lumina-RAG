@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { ArrowRight, BarChart2, Shield, Zap, ChevronDown, FileSearch, TrendingUp, Database } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -16,8 +16,8 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { type: "spring", stiffness: 300, damping: 24 }
   }
@@ -34,7 +34,7 @@ const Landing: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', paddingTop: '80px' }}>
       <Navbar />
-      
+
       {/* Hero Section */}
       <section style={{ display: 'flex', alignItems: 'center', padding: '5rem 4rem 3rem', minHeight: 'calc(100vh - 80px)', position: 'relative' }}>
         <div style={{ flex: 1, paddingRight: '4rem' }}>
@@ -47,15 +47,15 @@ const Landing: React.FC = () => {
               <Zap size={14} />
               Next-Gen Financial Intelligence
             </motion.div>
-            
+
             <motion.h1 variants={itemVariants} style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.03em', fontFamily: 'Outfit, sans-serif' }}>
               Unleash the Power of <br /><span className="text-gradient" style={{ fontSize: 'clamp(2.75rem, 5.5vw, 4.5rem)' }}>Lumina Finance</span>
             </motion.h1>
-            
+
             <motion.p variants={itemVariants} style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', maxWidth: '540px', lineHeight: 1.7 }}>
               Analyze SEC filings, uncover hidden insights, and make data-driven decisions with our advanced Retrieval-Augmented Generation platform.
             </motion.p>
-            
+
             <motion.div variants={itemVariants} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <Link to="/register" style={{ textDecoration: 'none' }}>
                 <button className="btn btn-primary" style={{ padding: '0.875rem 2rem', fontSize: '1rem' }}>
@@ -70,7 +70,7 @@ const Landing: React.FC = () => {
             </motion.div>
           </motion.div>
         </div>
-        
+
         <div style={{ flex: 1, position: 'relative' }} className="hide-mobile">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, rotateY: 5 }}
@@ -135,7 +135,7 @@ const Landing: React.FC = () => {
 
       {/* Features Section */}
       <section style={{ padding: '6rem 4rem', position: 'relative', zIndex: 10 }}>
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -148,7 +148,7 @@ const Landing: React.FC = () => {
             <motion.h2 variants={itemVariants} style={{ fontSize: 'clamp(1.75rem, 3vw, 2.5rem)', marginBottom: '1rem', fontFamily: 'Outfit, sans-serif' }}>Enterprise-Grade Analysis</motion.h2>
             <motion.p variants={itemVariants} style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto', lineHeight: 1.6 }}>Everything you need to process complex financial documents instantly.</motion.p>
           </div>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
             {[
               { icon: <Zap size={28} />, title: 'Real-time Insights', desc: 'Query thousands of SEC filings in milliseconds using state-of-the-art vector search.', color: 'var(--accent-blue)', bg: 'rgba(59, 130, 246, 0.08)' },
@@ -158,11 +158,11 @@ const Landing: React.FC = () => {
               { icon: <TrendingUp size={28} />, title: 'Live Stock Data', desc: 'Interactive ticker mentions with real-time price charts and performance metrics.', color: 'var(--accent-pink)', bg: 'rgba(236, 72, 153, 0.08)' },
               { icon: <Database size={28} />, title: 'Multi-Year Analysis', desc: 'Auto-ingest and compare filings across multiple years for trend detection.', color: 'var(--warning)', bg: 'rgba(245, 158, 11, 0.08)' },
             ].map((feature, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 variants={itemVariants}
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                className="glass-panel" 
+                className="glass-panel"
                 style={{ padding: '2rem', cursor: 'default' }}
               >
                 <div style={{
