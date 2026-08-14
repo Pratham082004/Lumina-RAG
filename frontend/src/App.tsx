@@ -10,8 +10,9 @@ import Verify from './pages/Verify';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 import Settings from './pages/Settings';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
-import AnimatedBackground from './components/AnimatedBackground';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -39,6 +40,8 @@ const AnimatedRoutes = () => {
         <Route path="/verify" element={<PageWrapper><Verify /></PageWrapper>} />
         <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
         <Route path="/settings" element={<PageWrapper><Settings /></PageWrapper>} />
+        <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
+        <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
         <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
@@ -48,7 +51,6 @@ const AnimatedRoutes = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <AnimatedBackground />
       <AnimatedRoutes />
     </Router>
   );

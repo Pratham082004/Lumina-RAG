@@ -1,10 +1,14 @@
 import React from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { ArrowRight, BarChart2, Shield, Zap, ChevronDown, FileSearch, TrendingUp, Database } from 'lucide-react';
+import { ArrowRight, BarChart2, Shield, Zap, FileSearch, TrendingUp, Database } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import HowItWorks from '../components/HowItWorks';
+import InteractiveChatPreview from '../components/InteractiveChatPreview';
+import FAQ from '../components/FAQ';
 import Footer from '../components/Footer';
+import Hero from '../components/Hero';
 import { Link } from 'react-router-dom';
-import illustration from '../assets/images/auth_illustration.png';
+import AnimatedCounter from '../components/AnimatedCounter';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -36,97 +40,27 @@ const Landing: React.FC = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section style={{ display: 'flex', alignItems: 'center', padding: '5rem 4rem 3rem', minHeight: 'calc(100vh - 80px)', position: 'relative' }}>
-        <div style={{ flex: 1, paddingRight: '4rem' }}>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={itemVariants} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '100px', color: 'var(--accent-blue)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '2rem' }}>
-              <Zap size={14} />
-              Next-Gen Financial Intelligence
-            </motion.div>
-
-            <motion.h1 variants={itemVariants} style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.03em', fontFamily: 'Outfit, sans-serif' }}>
-              Unleash the Power of <br /><span className="text-gradient" style={{ fontSize: 'clamp(2.75rem, 5.5vw, 4.5rem)' }}>Lumina Finance</span>
-            </motion.h1>
-
-            <motion.p variants={itemVariants} style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', maxWidth: '540px', lineHeight: 1.7 }}>
-              Analyze SEC filings, uncover hidden insights, and make data-driven decisions with our advanced Retrieval-Augmented Generation platform.
-            </motion.p>
-
-            <motion.div variants={itemVariants} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <Link to="/register" style={{ textDecoration: 'none' }}>
-                <button className="btn btn-primary" style={{ padding: '0.875rem 2rem', fontSize: '1rem' }}>
-                  Start Free Trial <ArrowRight size={18} style={{ marginLeft: '0.25rem' }} />
-                </button>
-              </Link>
-              <Link to="/about" style={{ textDecoration: 'none' }}>
-                <button className="btn btn-secondary" style={{ padding: '0.875rem 2rem', fontSize: '1rem' }}>
-                  Learn More
-                </button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        <div style={{ flex: 1, position: 'relative' }} className="hide-mobile">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, rotateY: 5 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ duration: 1, delay: 0.4, type: "spring", stiffness: 100 }}
-            className="glass-panel"
-            style={{ padding: '0.75rem', borderRadius: '24px', position: 'relative', zIndex: 2, transformPerspective: 1000 }}
-            whileHover={{ scale: 1.02, rotateY: -2, transition: { duration: 0.4 } }}
-          >
-            <img src={illustration} alt="Platform Preview" style={{ width: '100%', borderRadius: '18px', display: 'block' }} />
-          </motion.div>
-
-          {/* Floating accent glow behind illustration */}
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            width: '80%', height: '80%',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 70%)',
-            filter: 'blur(60px)', zIndex: 0,
-          }} />
-        </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          style={{
-            position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
-            color: 'var(--text-secondary)', fontSize: '0.75rem', letterSpacing: '0.1em',
-          }}
-        >
-          <span>SCROLL</span>
-          <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
-            <ChevronDown size={18} />
-          </motion.div>
-        </motion.div>
-      </section>
+      <Hero />
 
       {/* Stats Bar */}
-      <section style={{ padding: '0 4rem', position: 'relative', zIndex: 10 }}>
+      <section className="px-4 md:px-16 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="glass-panel"
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderRadius: '20px', overflow: 'hidden' }}
+          className="glass-panel grid grid-cols-2 md:grid-cols-4 rounded-[20px] overflow-hidden"
         >
           {stats.map((stat, i) => (
             <div key={i} style={{
               padding: '2rem 1.5rem',
               textAlign: 'center',
-              borderRight: i < stats.length - 1 ? '1px solid var(--border-color)' : 'none',
+              borderRight: (i === 0 || i === 2) || (window.innerWidth > 768 && i < stats.length - 1) ? '1px solid var(--border-color)' : 'none',
+              borderBottom: i < 2 ? '1px solid var(--border-color)' : 'none',
             }}>
-              <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'Outfit, sans-serif', marginBottom: '0.25rem' }}>{stat.value}</div>
+              <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'Outfit, sans-serif', marginBottom: '0.25rem' }}>
+                <AnimatedCounter value={stat.value} />
+              </div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.02em' }}>{stat.label}</div>
             </div>
           ))}
@@ -134,7 +68,7 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section style={{ padding: '6rem 4rem', position: 'relative', zIndex: 10 }}>
+      <section className="py-16 md:py-24 px-4 md:px-16 relative z-10">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -149,7 +83,7 @@ const Landing: React.FC = () => {
             <motion.p variants={itemVariants} style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '0 auto', lineHeight: 1.6 }}>Everything you need to process complex financial documents instantly.</motion.p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
               { icon: <Zap size={28} />, title: 'Real-time Insights', desc: 'Query thousands of SEC filings in milliseconds using state-of-the-art vector search.', color: 'var(--accent-blue)', bg: 'rgba(59, 130, 246, 0.08)' },
               { icon: <BarChart2 size={28} />, title: 'Data Grounding', desc: 'Every AI answer is directly cited and grounded in official 10-K financial documents.', color: 'var(--accent-purple)', bg: 'rgba(139, 92, 246, 0.08)' },
@@ -181,22 +115,20 @@ const Landing: React.FC = () => {
         </motion.div>
       </section>
 
+      <HowItWorks />
+      
+      <InteractiveChatPreview />
+
+      <FAQ />
+
       {/* CTA Section */}
-      <section style={{ padding: '4rem', position: 'relative', zIndex: 10 }}>
+      <section className="py-16 px-4 md:px-16 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="glass-panel"
-          style={{
-            padding: '4rem 3rem',
-            textAlign: 'center',
-            maxWidth: '800px',
-            margin: '0 auto',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
+          className="glass-panel p-8 md:p-12 text-center max-w-[800px] mx-auto relative overflow-hidden"
         >
           {/* Background glow */}
           <div style={{

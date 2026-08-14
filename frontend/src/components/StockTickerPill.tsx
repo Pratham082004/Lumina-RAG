@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { LineChart, Line, YAxis, ResponsiveContainer } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface StockData {
   ticker: string;
@@ -39,7 +40,7 @@ const StockTickerPill: React.FC<StockTickerPillProps> = ({ ticker }) => {
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(true);
       fetchStockData();
-    }, 300); // 300ms delay before showing tooltip to avoid flashing
+    }, 200); // reduced delay for snappier feel
   };
 
   const handleMouseLeave = () => {
@@ -50,103 +51,66 @@ const StockTickerPill: React.FC<StockTickerPillProps> = ({ ticker }) => {
   };
 
   const isPositive = data ? data.currentPrice >= data.previousClose : true;
-  const color = isPositive ? '#00C49F' : '#FF8042'; // Green or Red
+  const color = isPositive ? 'var(--accent-sage)' : 'var(--accent-rust)';
   const changePercent = data 
     ? (((data.currentPrice - data.previousClose) / data.previousClose) * 100).toFixed(2)
     : '0.00';
 
   return (
     <span 
-      style={{ position: 'relative', display: 'inline-block' }}
+      className="relative inline-block cursor-pointer font-sans"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <span 
-        style={{
-          backgroundColor: 'rgba(59, 130, 246, 0.15)', // Light blue background
-          color: '#60A5FA', // Blue text
-          padding: '2px 8px',
-          borderRadius: '12px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          transition: 'all 0.2s',
-          fontSize: '0.9em'
-        }}
-      >
+      <span className="bg-[rgba(128,128,128,0.1)] text-text-primary px-2 py-0.5 rounded-md font-semibold border border-border-color transition-colors hover:bg-[rgba(128,128,128,0.15)] hover:border-border-hover text-[0.85em]">
         ${ticker}
       </span>
 
-      {isHovered && (
-        <div 
-          style={{
-            position: 'absolute',
-            bottom: '100%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            marginBottom: '8px',
-            backgroundColor: '#1F2937', // Dark gray
-            border: '1px solid #374151',
-            borderRadius: '8px',
-            padding: '12px',
-            width: '200px',
-            zIndex: 1000,
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 'bold', color: 'white' }}>${ticker}</span>
-            {loading ? (
-              <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Loading...</span>
-            ) : error ? (
-              <span style={{ fontSize: '12px', color: '#EF4444' }}>Error</span>
-            ) : data ? (
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold', color: 'white' }}>${data.currentPrice.toFixed(2)}</div>
-                <div style={{ fontSize: '12px', color: color }}>
-                  {isPositive ? '+' : ''}{changePercent}%
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div 
+            initial={{ opacity: 0, y: 5, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 z-50 editorial-card p-4 pointer-events-none"
+          >
+            <div className="flex justify-between items-center mb-1">
+              <span className="font-bold text-text-primary text-sm">${ticker}</span>
+              {loading ? (
+                <span className="text-xs text-text-secondary animate-pulse">Loading...</span>
+              ) : error ? (
+                <span className="text-xs text-error">Data unavailable</span>
+              ) : data ? (
+                <div className="text-right">
+                  <div className="font-bold text-text-primary text-sm">${data.currentPrice.toFixed(2)}</div>
+                  <div className="text-[11px] font-medium" style={{ color }}>
+                    {isPositive ? '+' : ''}{changePercent}%
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </div>
-          
-          {data && !loading && !error && (
-            <div style={{ width: '100%', height: '60px', marginTop: '4px' }}>
-              <ResponsiveContainer>
-                <LineChart data={data.chart}>
-                  <YAxis domain={['auto', 'auto']} hide />
-                  <Line 
-                    type="monotone" 
-                    dataKey="price" 
-                    stroke={color} 
-                    strokeWidth={2} 
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              ) : null}
             </div>
-          )}
-
-          {/* Tooltip Arrow */}
-          <div 
-            style={{
-              position: 'absolute',
-              bottom: '-6px',
-              left: '50%',
-              transform: 'translateX(-50%) rotate(45deg)',
-              width: '12px',
-              height: '12px',
-              backgroundColor: '#1F2937',
-              borderBottom: '1px solid #374151',
-              borderRight: '1px solid #374151',
-            }}
-          />
-        </div>
-      )}
+            
+            {data && !loading && !error && (
+              <div className="w-full h-[50px] mt-2 opacity-90">
+                <ResponsiveContainer>
+                  <LineChart data={data.chart}>
+                    <YAxis domain={['auto', 'auto']} hide />
+                    <Line 
+                      type="monotone" 
+                      dataKey="price" 
+                      stroke={color} 
+                      strokeWidth={2} 
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </span>
   );
 };
