@@ -11,7 +11,6 @@ from app.dependencies import get_rag_service
 from app.retrieval.rag_service import RAGService
 from app.schemas.chats import (
     ChatRequest,
-    ChatResponse,
 )
 from fastapi.responses import StreamingResponse
 

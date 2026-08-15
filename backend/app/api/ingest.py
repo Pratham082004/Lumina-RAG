@@ -46,7 +46,6 @@ async def ingest_filing(
 async def upload_document(file: UploadFile = File(...), session_id: str = Form(...), pipeline: IngestionPipeline = Depends(get_pipeline)):
     from pypdf import PdfReader
     import io
-    from app.ingestion.models import Chunk
     import uuid
 
     try:

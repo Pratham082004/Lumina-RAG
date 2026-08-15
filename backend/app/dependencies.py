@@ -23,7 +23,6 @@ from app.database.session import SessionLocal, get_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from jose import JWTError
 from app.models.user import User
 from app.services.auth_service import verify_token
 from app.config import settings
