@@ -25,22 +25,36 @@ interface ChatSession {
   updatedAt: string;
 }
 
-const COLORS = ['#4B6E96', '#9E5540', '#5F7966', '#A67C46', '#2A4B75', '#8C3A25'];
+const COLORS = ['#2fe6c3', '#6b8db5', '#f5b942', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-const ChartRenderer = ({ data }: { data: any }) => {
+const formatContentWithTickers = (content: string) => {
+  if (!content) return '';
+  const codeBlockRegex = /(```[\s\S]*?```|`[^`]+`)/g;
+  return content.split(codeBlockRegex).map((part) => {
+    if (part.startsWith('`')) {
+      return part;
+    }
+    return part.replace(/(?<!\[)\$([A-Z]{1,5})\b(?!\]|\(ticker:)/g, '[$&](ticker:$1)');
+  }).join('');
+};
+
+const ChartRenderer = React.memo(({ data }: { data: any }) => {
   if (!data || !data.type) return null;
+
+  const rawTitle = data.title || '';
+  const cleanTitle = rawTitle.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
   const renderChart = () => {
     switch (data.type) {
       case 'bar':
         return (
           <BarChart data={data.data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.2)" vertical={false} />
-            <XAxis dataKey={data.xKey || data.nameKey || 'name'} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
-            <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
-            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)', borderRadius: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }} itemStyle={{ color: 'var(--text-primary)' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.15)" vertical={false} />
+            <XAxis dataKey={data.xKey || data.nameKey || 'name'} stroke="var(--color-text-secondary)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+            <YAxis stroke="var(--color-text-secondary)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
+            <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-primary)', borderRadius: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }} itemStyle={{ color: 'var(--color-text-primary)' }} />
             <Legend wrapperStyle={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', paddingTop: '10px' }} />
-            <Bar dataKey={data.yKey || data.dataKey || 'value'} fill="var(--color-accent-blue)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey={data.yKey || data.dataKey || 'value'} fill="var(--color-accent-teal)" radius={[6, 6, 0, 0]} isAnimationActive={false} />
           </BarChart>
         );
       case 'pie':
@@ -56,26 +70,27 @@ const ChartRenderer = ({ data }: { data: any }) => {
               innerRadius={60}
               label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
               labelLine={false}
-              stroke="var(--bg-secondary)"
+              stroke="var(--color-bg-panel)"
               strokeWidth={2}
+              isAnimationActive={false}
             >
               {data.data.map((_entry: any, index: number) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)', borderRadius: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }} itemStyle={{ color: 'var(--text-primary)' }} />
+            <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-primary)', borderRadius: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }} itemStyle={{ color: 'var(--color-text-primary)' }} />
             <Legend wrapperStyle={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', paddingTop: '10px' }} />
           </PieChart>
         );
       case 'line':
         return (
           <LineChart data={data.data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.2)" vertical={false} />
-            <XAxis dataKey={data.xKey || data.nameKey || 'name'} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
-            <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
-            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)', borderRadius: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }} itemStyle={{ color: 'var(--text-primary)' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.15)" vertical={false} />
+            <XAxis dataKey={data.xKey || data.nameKey || 'name'} stroke="var(--color-text-secondary)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+            <YAxis stroke="var(--color-text-secondary)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
+            <Tooltip contentStyle={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-primary)', borderRadius: '12px', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }} itemStyle={{ color: 'var(--color-text-primary)' }} />
             <Legend wrapperStyle={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', paddingTop: '10px' }} />
-            <Line type="monotone" dataKey={data.yKey || data.dataKey || 'value'} stroke="var(--color-accent-rust)" strokeWidth={2} dot={{ fill: 'var(--color-accent-rust)', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} />
+            <Line type="monotone" dataKey={data.yKey || data.dataKey || 'value'} stroke="var(--color-accent-teal)" strokeWidth={2.5} dot={{ fill: 'var(--color-accent-teal)', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
           </LineChart>
         );
       default:
@@ -85,15 +100,15 @@ const ChartRenderer = ({ data }: { data: any }) => {
 
   return (
     <div className="editorial-card my-6 p-6">
-      {data.title && <h3 className="mb-6 text-center font-serif text-lg font-medium tracking-tight text-text-primary">{data.title}</h3>}
+      {cleanTitle && <h3 className="mb-6 text-center font-heading text-base font-semibold tracking-tight text-text-primary">{cleanTitle}</h3>}
       <div className="w-full h-[300px]">
-        <ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%" debounce={50}>
           {renderChart()}
         </ResponsiveContainer>
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data));
 
 const suggestionCards = [
   { icon: <BarChart2 size={18} />, title: 'Analyze Stock', desc: 'Analyze the latest earnings report for Apple (AAPL)' },
@@ -721,6 +736,58 @@ const Dashboard: React.FC = () => {
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             components={{
+                              h1({ node, children, ...props }: any) {
+                                return <h1 className="text-xl font-heading font-bold text-text-primary mt-6 mb-3 border-b border-border-color/60 pb-2 flex items-center gap-2" {...props}>{children}</h1>;
+                              },
+                              h2({ node, children, ...props }: any) {
+                                return <h2 className="text-lg font-heading font-semibold text-text-primary mt-5 mb-2.5 flex items-center gap-2" {...props}>{children}</h2>;
+                              },
+                              h3({ node, children, ...props }: any) {
+                                return <h3 className="text-base font-heading font-semibold text-accent-teal mt-4 mb-2 flex items-center gap-2" {...props}>{children}</h3>;
+                              },
+                              p({ node, children, ...props }: any) {
+                                return <p className="text-sm font-sans leading-relaxed text-text-primary/90 mb-3" {...props}>{children}</p>;
+                              },
+                              ul({ node, children, ...props }: any) {
+                                return <ul className="list-disc pl-5 space-y-1.5 mb-4 text-sm font-sans text-text-primary/90 marker:text-accent-teal" {...props}>{children}</ul>;
+                              },
+                              ol({ node, children, ...props }: any) {
+                                return <ol className="list-decimal pl-5 space-y-1.5 mb-4 text-sm font-sans text-text-primary/90 marker:text-accent-teal" {...props}>{children}</ol>;
+                              },
+                              li({ node, children, ...props }: any) {
+                                return <li className="leading-relaxed" {...props}>{children}</li>;
+                              },
+                              blockquote({ node, children, ...props }: any) {
+                                return (
+                                  <blockquote className="my-4 p-4 rounded-xl bg-sidebar-active/60 border-l-4 border-accent-teal text-text-primary font-sans text-sm shadow-sm" {...props}>
+                                    {children}
+                                  </blockquote>
+                                );
+                              },
+                              table({ node, children, ...props }: any) {
+                                return (
+                                  <div className="w-full overflow-x-auto my-5 rounded-xl border border-border-color bg-sidebar-active/30">
+                                    <table className="w-full text-sm text-left border-collapse" {...props}>
+                                      {children}
+                                    </table>
+                                  </div>
+                                );
+                              },
+                              thead({ node, children, ...props }: any) {
+                                return <thead className="bg-sidebar-active/90 text-xs font-semibold uppercase tracking-wider text-text-secondary border-b border-border-color" {...props}>{children}</thead>;
+                              },
+                              th({ node, children, ...props }: any) {
+                                return <th className="px-4 py-3 font-sans text-text-primary font-semibold border-b border-border-color" {...props}>{children}</th>;
+                              },
+                              tbody({ node, children, ...props }: any) {
+                                return <tbody className="divide-y divide-border-color/40" {...props}>{children}</tbody>;
+                              },
+                              tr({ node, children, ...props }: any) {
+                                return <tr className="hover:bg-sidebar-hover/40 transition-colors" {...props}>{children}</tr>;
+                              },
+                              td({ node, children, ...props }: any) {
+                                return <td className="px-4 py-2.5 font-sans text-text-primary/90 text-sm" {...props}>{children}</td>;
+                              },
                               code({node, inline, className, children, ...props}: any) {
                                 const match = /language-(\w+)/.exec(className || '');
                                 if (!inline && match && match[1] === 'chart') {
@@ -728,21 +795,21 @@ const Dashboard: React.FC = () => {
                                     const chartData = JSON.parse(String(children).replace(/\n$/, ''));
                                     return <ChartRenderer data={chartData} />;
                                   } catch (e) {
-                                    return <div className="text-error">Failed to parse chart data.</div>;
+                                    return <div className="text-error font-sans text-sm p-4 border border-error/20 rounded-xl bg-error/5">Failed to render chart visual.</div>;
                                   }
                                 }
-                                return <code className={className} {...props}>{children}</code>;
+                                return <code className={`px-1.5 py-0.5 rounded bg-sidebar-active border border-border-color font-mono text-xs text-accent-amber ${className || ''}`} {...props}>{children}</code>;
                               },
                               a({node, href, children, ...props}: any) {
                                 if (href && href.startsWith('ticker:')) {
                                   const ticker = href.split(':')[1];
                                   return <StockTickerPill ticker={ticker} />;
                                 }
-                                return <a href={href} className="text-accent-blue hover:underline underline-offset-2" {...props}>{children}</a>;
+                                return <a href={href} className="text-accent-teal hover:underline underline-offset-2 font-medium" {...props}>{children}</a>;
                               }
                             }}
                           >
-                            {msg.content.replace(/\$([a-zA-Z0-9.-]{1,6})\b/g, (match, t) => `[${match}](ticker:${t.toUpperCase()})`)}
+                            {formatContentWithTickers(msg.content)}
                           </ReactMarkdown>
                         </div>
                         {msg.sources && msg.sources.length > 0 && (

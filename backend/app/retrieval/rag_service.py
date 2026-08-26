@@ -111,12 +111,24 @@ class RAGService:
             retrieval = RetrievalResult(question=question, results=sorted(results, key=lambda r: r.score, reverse=True))
 
         # --------------------------------------------------
+        # Live Stock Quote Lookup
+        # --------------------------------------------------
+        live_stock_data = None
+        if isinstance(search_ticker, str):
+            try:
+                from app.api.stocks import fetch_stock_quote
+                live_stock_data = await fetch_stock_quote(search_ticker)
+            except Exception as exc:
+                logger.debug("Could not fetch live stock quote for %s: %s", search_ticker, exc)
+
+        # --------------------------------------------------
         # Prompt
         # --------------------------------------------------
 
         prompt = self.prompt_builder.build(
             retrieval,
-            is_comparison=is_comparison
+            is_comparison=is_comparison,
+            live_stock_data=live_stock_data,
         )
 
         # --------------------------------------------------
@@ -228,7 +240,19 @@ class RAGService:
                     results.append(SearchResult(text=d, metadata=m, score=max(0.0, 1.0 - dist)))
                 retrieval = RetrievalResult(question=question, results=sorted(results, key=lambda r: r.score, reverse=True))
 
-            prompt = self.prompt_builder.build(retrieval, is_comparison=is_comparison)
+            live_stock_data = None
+            if isinstance(search_ticker, str):
+                try:
+                    from app.api.stocks import fetch_stock_quote
+                    live_stock_data = await fetch_stock_quote(search_ticker)
+                except Exception as exc:
+                    logger.debug("Could not fetch live stock quote for %s: %s", search_ticker, exc)
+
+            prompt = self.prompt_builder.build(
+                retrieval,
+                is_comparison=is_comparison,
+                live_stock_data=live_stock_data,
+            )
 
             sources_data = [
                 {
