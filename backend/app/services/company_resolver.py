@@ -41,7 +41,30 @@ class CompanyResolver:
         print("Words             :", words)
 
         # ------------------------------------
-        # 1. Full company name
+        # 1. Manual / High-Priority Aliases
+        # ------------------------------------
+        manual_aliases = {
+            "apple": "AAPL",
+            "microsoft": "MSFT",
+            "google": "GOOGL",
+            "alphabet": "GOOGL",
+            "facebook": "META",
+            "meta": "META",
+            "amazon": "AMZN",
+            "nvidia": "NVDA",
+            "tesla": "TSLA",
+            "netflix": "NFLX",
+        }
+
+        for word in words:
+            if word in manual_aliases:
+                ticker = manual_aliases[word]
+                if ticker in self.cache.ticker_to_company:
+                    print("Matched Manual Alias:", word, "->", ticker)
+                    return self.cache.ticker_to_company[ticker]
+
+        # ------------------------------------
+        # 2. Full company name
         # ------------------------------------
 
         for company_name, ticker in self.cache.company_to_ticker.items():
@@ -51,7 +74,7 @@ class CompanyResolver:
                 return self.cache.ticker_to_company[ticker]
 
         # ------------------------------------
-        # 2. Alias lookup
+        # 3. Alias lookup
         # ------------------------------------
 
         for word in words:

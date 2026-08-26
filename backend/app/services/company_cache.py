@@ -16,10 +16,10 @@ STOP_WORDS = {
     "can", "could", "should", "would", "will", "shall",
     "this", "that", "these", "those",
 
-    # Generic business words
+    # Generic business & financial words
     "group", "holding", "holdings",
     "international", "global",
-    "capital", "financial", "finance",
+    "capital", "financial", "financials", "finance",
     "energy", "resources",
     "technology", "technologies",
     "systems", "services", "solutions",
@@ -29,6 +29,15 @@ STOP_WORDS = {
     "trust", "fund", "bank",
     "company", "corporation", "corp",
     "inc", "limited", "ltd",
+    "stock", "stocks", "price", "prices", "share", "shares",
+    "market", "markets", "exchange", "exchanges",
+    "revenue", "revenues", "earnings", "profit", "profits",
+    "income", "loss", "losses", "growth", "sales", "margin", "margins",
+    "report", "reports", "filing", "filings", "asset", "assets",
+    "debt", "debts", "equity", "cash", "flow", "flows",
+    "dividend", "dividends", "investor", "investors", "investment", "investments",
+    "stockholder", "stockholders", "shareholder", "shareholders",
+    "quarter", "quarterly", "annual", "year", "yearly", "fiscal",
 }
 
 

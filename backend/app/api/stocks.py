@@ -5,53 +5,69 @@ router = APIRouter()
 
 @router.get("/{ticker}")
 async def get_stock_data(ticker: str):
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range=1mo&interval=1d"
+    clean_ticker = ticker.strip().lstrip("$").upper()
+    if not clean_ticker:
+        raise HTTPException(status_code=400, detail="Invalid stock ticker provided.")
+
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{clean_ticker}?range=1mo&interval=1d"
     
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
     }
 
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url, headers=headers, timeout=10.0)
+            if response.status_code != 200:
+                fallback_url = f"https://query2.finance.yahoo.com/v8/finance/chart/{clean_ticker}?range=1mo&interval=1d"
+                response = await client.get(fallback_url, headers=headers, timeout=10.0)
+
             response.raise_for_status()
             
             data = response.json()
+            chart_obj = data.get("chart", {})
+            result = chart_obj.get("result")
             
-            result = data.get("chart", {}).get("result", [])
-            if not result:
-                raise HTTPException(status_code=404, detail="Ticker not found or no data available")
+            if not result or not isinstance(result, list) or len(result) == 0 or result[0] is None:
+                err_info = chart_obj.get("error", {})
+                detail_msg = err_info.get("description") if isinstance(err_info, dict) else None
+                raise HTTPException(status_code=404, detail=detail_msg or f"Ticker '{clean_ticker}' not found or no data available")
                 
             chart_data = result[0]
-            timestamps = chart_data.get("timestamp", [])
-            indicators = chart_data.get("indicators", {}).get("quote", [{}])[0]
-            close_prices = indicators.get("close", [])
+            timestamps = chart_data.get("timestamp") or []
+            quote_list = chart_data.get("indicators", {}).get("quote", [])
+            indicators = quote_list[0] if (quote_list and isinstance(quote_list, list) and quote_list[0]) else {}
+            close_prices = indicators.get("close") or []
             
             # Filter out null values
             formatted_data = []
             for t, p in zip(timestamps, close_prices):
-                if p is not None:
+                if t is not None and p is not None:
                     formatted_data.append({
                         "date": t * 1000, # Convert to milliseconds for JS date parsing if needed
-                        "price": round(p, 2)
+                        "price": round(float(p), 2)
                     })
                     
             if not formatted_data:
-                raise HTTPException(status_code=404, detail="No valid price data available")
+                raise HTTPException(status_code=404, detail=f"No valid price data available for ticker '{clean_ticker}'")
 
             # Get meta info for current price / previous close
             meta = chart_data.get("meta", {})
-            regularMarketPrice = meta.get("regularMarketPrice", 0)
-            previousClose = meta.get("previousClose", 0)
+            regularMarketPrice = meta.get("regularMarketPrice") or (formatted_data[-1]["price"] if formatted_data else 0)
+            previousClose = meta.get("previousClose") or meta.get("chartPreviousClose") or (formatted_data[-2]["price"] if len(formatted_data) > 1 else regularMarketPrice)
             
             return {
-                "ticker": ticker.upper(),
-                "currentPrice": regularMarketPrice,
-                "previousClose": previousClose,
+                "ticker": clean_ticker,
+                "currentPrice": round(float(regularMarketPrice), 2),
+                "previousClose": round(float(previousClose), 2),
                 "chart": formatted_data
             }
             
+    except HTTPException:
+        raise
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=f"Failed to fetch from Yahoo Finance: {e.response.text}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

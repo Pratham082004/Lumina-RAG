@@ -6,6 +6,7 @@ from app.api.health import router as health_router
 from app.api.auth import router as auth_router
 from app.api.user import router as user_router
 from app.api.history import router as history_router
+from app.api.stocks import router as stocks_router
 
 api_router = APIRouter()
 
@@ -43,4 +44,10 @@ api_router.include_router(
     history_router,
     prefix="/history",
     tags=["History"],
+)
+
+api_router.include_router(
+    stocks_router,
+    prefix="/stocks",
+    tags=["Stocks"],
 )

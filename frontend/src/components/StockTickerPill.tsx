@@ -21,12 +21,15 @@ const StockTickerPill: React.FC<StockTickerPillProps> = ({ ticker }) => {
   const [error, setError] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const cleanTicker = ticker.replace(/^\$/, '').trim().toUpperCase();
+
   const fetchStockData = async () => {
-    if (data || loading) return;
+    if (data || loading || !cleanTicker) return;
     setLoading(true);
     setError(false);
     try {
-      const response = await axios.get(`http://localhost:8000/stocks/${ticker}`);
+      const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      const response = await axios.get(`${baseUrl}/stocks/${encodeURIComponent(cleanTicker)}`);
       setData(response.data);
     } catch (err) {
       console.error('Failed to fetch stock data:', err);
@@ -63,7 +66,7 @@ const StockTickerPill: React.FC<StockTickerPillProps> = ({ ticker }) => {
       onMouseLeave={handleMouseLeave}
     >
       <span className="bg-[rgba(128,128,128,0.1)] text-text-primary px-2 py-0.5 rounded-md font-semibold border border-border-color transition-colors hover:bg-[rgba(128,128,128,0.15)] hover:border-border-hover text-[0.85em]">
-        ${ticker}
+        ${cleanTicker}
       </span>
 
       <AnimatePresence>
@@ -76,7 +79,7 @@ const StockTickerPill: React.FC<StockTickerPillProps> = ({ ticker }) => {
             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 z-50 editorial-card p-4 pointer-events-none"
           >
             <div className="flex justify-between items-center mb-1">
-              <span className="font-bold text-text-primary text-sm">${ticker}</span>
+              <span className="font-bold text-text-primary text-sm">${cleanTicker}</span>
               {loading ? (
                 <span className="text-xs text-text-secondary animate-pulse">Loading...</span>
               ) : error ? (

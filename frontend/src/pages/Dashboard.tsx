@@ -742,7 +742,7 @@ const Dashboard: React.FC = () => {
                               }
                             }}
                           >
-                            {msg.content.replace(/\$([A-Z]{1,5})\b/g, '[$1](ticker:$1)')}
+                            {msg.content.replace(/\$([a-zA-Z0-9.-]{1,6})\b/g, (match, t) => `[${match}](ticker:${t.toUpperCase()})`)}
                           </ReactMarkdown>
                         </div>
                         {msg.sources && msg.sources.length > 0 && (

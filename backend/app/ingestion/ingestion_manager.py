@@ -67,13 +67,26 @@ class IngestionManager:
         results = []
 
         for year in missing:
+            try:
+                result = await self.pipeline.ingest_year(
+                    ticker=ticker,
+                    year=year,
+                    filing_type=filing_type,
+                )
+                results.append(result)
+            except Exception as exc:
+                logger.warning("Could not ingest %s for %s (%s): %s", filing_type, ticker, year, exc)
 
-            result = await self.pipeline.ingest_year(
-                ticker=ticker,
-                year=year,
-                filing_type=filing_type,
-            )
-
-            results.append(result)
+        # If no filings exist in DB for this company yet, fallback to ingesting the latest available filing
+        updated_existing = self.report_repo.available_years(company.id, filing_type)
+        if not updated_existing:
+            try:
+                fallback_result = await self.pipeline.ingest(
+                    ticker=ticker,
+                    filing_type=filing_type,
+                )
+                results.append(fallback_result)
+            except Exception as exc:
+                logger.warning("Fallback ingestion failed for %s: %s", ticker, exc)
 
         return results

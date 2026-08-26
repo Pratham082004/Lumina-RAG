@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     # ==========================================================
     JWT_ACCESS_SECRET: str = "super_secret_access_key"
     JWT_REFRESH_SECRET: str = "super_secret_refresh_key"
-    JWT_ACCESS_EXPIRES_MINUTES: int = 15
+    JWT_ACCESS_EXPIRES_MINUTES: int = 1440
     JWT_REFRESH_EXPIRES_DAYS: int = 7
     GOOGLE_CLIENT_ID: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
