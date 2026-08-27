@@ -7,6 +7,7 @@ from app.api.auth import router as auth_router
 from app.api.user import router as user_router
 from app.api.history import router as history_router
 from app.api.stocks import router as stocks_router
+from app.api.contact import router as contact_router
 
 api_router = APIRouter()
 
@@ -50,4 +51,10 @@ api_router.include_router(
     stocks_router,
     prefix="/stocks",
     tags=["Stocks"],
+)
+
+api_router.include_router(
+    contact_router,
+    prefix="/contact",
+    tags=["Contact"],
 )

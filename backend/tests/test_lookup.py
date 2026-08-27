@@ -15,6 +15,7 @@ async def test_sec_lookups(mocker):
     mocker.patch.object(
         SECCompanyLookup, 
         "search", 
+        new_callable=mocker.AsyncMock,
         return_value=mock_company
     )
 
@@ -33,6 +34,7 @@ async def test_sec_lookups(mocker):
     mocker.patch.object(
         SECFilingLookup,
         "latest_filing",
+        new_callable=mocker.AsyncMock,
         return_value=mock_filing
     )
 
