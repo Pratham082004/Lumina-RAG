@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/stats/{user_id}")
 def get_user_stats(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
         
     chat_sessions = db.query(ChatSession).filter(ChatSession.userId == user_id).all()
     session_ids = [s.id for s in chat_sessions]
@@ -33,7 +33,7 @@ def get_user_stats(user_id: str, db: Session = Depends(get_db), current_user: Us
 @router.put("/profile/{user_id}", response_model=UserOut)
 def update_profile(user_id: str, payload: UserProfileUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
         
     for key, value in payload.dict(exclude_unset=True).items():
         setattr(current_user, key, value)

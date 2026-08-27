@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get("/{user_id}", response_model=List[ChatSessionOut])
 def get_user_sessions(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
         
     sessions = db.query(ChatSession).filter(ChatSession.userId == user_id).order_by(ChatSession.updatedAt.desc()).all()
     return sessions
@@ -23,7 +23,7 @@ def get_user_sessions(user_id: str, db: Session = Depends(get_db), current_user:
 def get_session_messages(session_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
     if not session or session.userId != current_user.id:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
         
     messages = db.query(Message).filter(Message.chatSessionId == session_id).order_by(Message.createdAt.asc()).all()
     return messages
@@ -32,7 +32,7 @@ def get_session_messages(session_id: str, db: Session = Depends(get_db), current
 @router.post("/{user_id}", response_model=ChatSessionOut)
 def create_session(user_id: str, payload: ChatSessionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
         
     new_session = ChatSession(
         userId=user_id,
@@ -48,7 +48,7 @@ def create_session(user_id: str, payload: ChatSessionCreate, db: Session = Depen
 def add_message(session_id: str, payload: MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
     if not session or session.userId != current_user.id:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
         
     new_msg = Message(
         chatSessionId=session_id,
@@ -66,7 +66,7 @@ def add_message(session_id: str, payload: MessageCreate, db: Session = Depends(g
 def delete_session(session_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
     if not session or session.userId != current_user.id:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
         
     db.delete(session)
     db.commit()
