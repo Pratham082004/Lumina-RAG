@@ -45,6 +45,12 @@
 |--------|-----------------------|------------------------------------------------|
 | GET    | `/stocks/{ticker}`    | Get real-time stock price + 1-month chart data |
 
+### Contact & Support
+
+| Method | Endpoint              | Description                                    |
+|--------|-----------------------|------------------------------------------------|
+| POST   | `/contact`            | Submit contact form message (email + content)  |
+
 ## Request & Response Examples
 
 ### POST `/ingest`
