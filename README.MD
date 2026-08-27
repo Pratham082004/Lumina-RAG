@@ -103,6 +103,7 @@ npm run dev
 - Chat session history with persistent message storage
 - Interactive stock ticker mentions (hover for real-time price + sparkline chart)
 - Multi-company comparison queries
+- Contact form integration with backend API handling and feedback alerts
 - Dark/light theme toggle, Animated transitions, Glassmorphism UI
 
 ### 🔜 Planned
