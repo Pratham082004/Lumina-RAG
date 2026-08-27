@@ -295,7 +295,8 @@ const Dashboard: React.FC = () => {
           payload.tickers = comparisonTickers.split(',').map(t => t.trim().toUpperCase()).filter(t => t);
         }
 
-        const response = await fetch('http://localhost:8000/chat/', {
+        const apiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/chat/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -389,7 +390,8 @@ const Dashboard: React.FC = () => {
 
     try {
       setIsLoading(true);
-      await axios.post('http://localhost:8000/ingest/upload', formData, {
+      const apiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_AUTH_URL || 'http://localhost:8000';
+      await axios.post(`${apiUrl}/ingest/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setMessages(prev => [...prev, { role: 'assistant', content: `✅ Successfully uploaded and processed **${file.name}**. You can now ask questions about it.` }]);
