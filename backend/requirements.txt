@@ -7,7 +7,6 @@ pydantic-settings
 alembic
 httpx
 python-multipart
-google-genai
 beautifulsoup4
 lxml
 chromadb

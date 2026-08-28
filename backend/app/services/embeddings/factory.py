@@ -1,15 +1,14 @@
 from app.config import settings
 from app.services.embeddings.base import EmbeddingProvider
-from app.services.embeddings.gemini import GeminiEmbeddingProvider
+from app.services.embeddings.ollama import OllamaEmbeddingProvider
 
 
 def get_embedding_provider() -> EmbeddingProvider:
 
     provider = settings.EMBEDDING_PROVIDER.lower()
 
-    if provider == "gemini":
-        return GeminiEmbeddingProvider()
+    if provider == "ollama":
+        return OllamaEmbeddingProvider()
 
-    raise ValueError(
-        f"Unsupported embedding provider: {provider}"
-    )
+    # Default to OllamaProvider if provider is unspecified
+    return OllamaEmbeddingProvider()

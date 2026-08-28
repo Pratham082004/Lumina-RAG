@@ -10,15 +10,14 @@ from app.ingestion.pipeline import IngestionPipeline
 from app.retrieval.search import RetrievalService
 from app.retrieval.rag_service import RAGService
 
-from app.services.embeddings.gemini import GeminiEmbeddingProvider
-from app.services.llm.gemini import GeminiLLMProvider
+from app.services.embeddings.factory import get_embedding_provider
+from app.services.llm.factory import get_llm_provider
 from app.services.vector_store.chroma import ChromaService
 from app.services.company_resolver import CompanyResolver
 from app.services.company_cache import CompanyCache
 from app.ingestion.ingestion_manager import IngestionManager
 from app.repositories.report_repo import ReportRepository
 from app.repositories.company_repo import CompanyRepository
-from app.database.session import SessionLocal
 from app.database.session import SessionLocal, get_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -49,12 +48,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 @lru_cache
 def get_embedding_service():
-    return GeminiEmbeddingProvider()
+    return get_embedding_provider()
 
 
 @lru_cache
 def get_llm_service():
-    return GeminiLLMProvider()
+    return get_llm_provider()
 
 
 @lru_cache

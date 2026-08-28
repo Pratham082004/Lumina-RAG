@@ -23,7 +23,7 @@ To keep this file clean, detailed documentation has been split into the followin
 - **Framework**: FastAPI (Python 3.11+)
 - **Database**: PostgreSQL + SQLAlchemy ORM
 - **Vector Store**: ChromaDB
-- **AI Models**: Google Gemini LLM (`gemini-2.5-flash`) + Embeddings (`gemini-embedding-001`)
+- **AI Models**: Ollama Local LLM (`qwen2.5` / `llama3.1`) + Embeddings (`bge-m3`, 1024 dims)
 - **Authentication**: JWT + Google OAuth 2.0
 
 ### Frontend (`frontend/`)

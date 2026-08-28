@@ -110,13 +110,15 @@ Upload a custom PDF or text document. The document is chunked, embedded, and vec
 | `REDIS_HOST`             | Redis host                         | —                      |
 | `REDIS_PORT`             | Redis port                         | —                      |
 | `REPORT_STORAGE`         | Local path for downloaded filings  | —                      |
-| `GEMINI_API_KEY`         | Google Gemini API key              | —                      |
-| `GEMINI_EMBEDDING_MODEL` | Embedding model                    | `gemini-embedding-001` |
-| `GEMINI_MODEL`           | LLM model                         | `gemini-2.5-flash`     |
+| `EMBEDDING_PROVIDER`     | Embedding provider                 | `ollama`               |
+| `LLM_PROVIDER`           | LLM provider                       | `ollama`               |
+| `OLLAMA_BASE_URL`        | Ollama server base URL             | `http://localhost:11434`|
+| `OLLAMA_EMBED_MODEL`     | Ollama embedding model name        | `bge-m3`               |
+| `OLLAMA_LLM_MODEL`       | Ollama LLM model name              | `qwen2.5`              |
 | `VECTOR_DB`              | Vector database backend            | `chroma`               |
 | `CHROMA_PATH`            | ChromaDB persistence path          | `./storage/chroma`     |
 | `CHROMA_COLLECTION`      | ChromaDB collection name           | `financial_rag`        |
-| `VECTOR_SIZE`            | Embedding vector dimension         | `3072`                 |
+| `VECTOR_SIZE`            | Embedding vector dimension         | `1024`                 |
 | `JWT_ACCESS_SECRET`      | JWT access token signing secret    | (default provided)     |
 | `JWT_REFRESH_SECRET`     | JWT refresh token signing secret   | (default provided)     |
 | `JWT_ACCESS_EXPIRES_MINUTES` | Access token TTL (minutes)     | `15`                   |

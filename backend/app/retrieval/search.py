@@ -107,6 +107,8 @@ class RetrievalService:
 
         results = []
 
+        low_priority_sections = {"exhibits", "controls", "legal", "signatures"}
+
         for document, metadata, distance in zip(
             documents,
             metadatas,
@@ -118,6 +120,10 @@ class RetrievalService:
                 0.0,
                 1.0 - distance,
             )
+
+            chunk_section = str(metadata.get("section", "")).lower()
+            if chunk_section in low_priority_sections:
+                similarity *= 0.5  # Penalize administrative schedule chunks
 
             results.append(
                 SearchResult(
