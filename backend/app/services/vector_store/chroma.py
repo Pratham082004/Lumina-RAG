@@ -47,9 +47,24 @@ class ChromaService(VectorStore):
     def _ensure_collection(self) -> None:
 
         if self.collection is None:
-            self.collection = self.client.get_collection(
-                self.collection_name
+            self.collection = self.client.get_or_create_collection(
+                name=self.collection_name,
+                metadata={
+                    "hnsw:space": "cosine",
+                },
             )
+
+    def _reset_collection(self) -> None:
+        try:
+            self.client.delete_collection(self.collection_name)
+        except Exception:
+            pass
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection_name,
+            metadata={
+                "hnsw:space": "cosine",
+            },
+        )
 
     # ---------------------------------------------------------
     # Upsert
@@ -108,12 +123,28 @@ class ChromaService(VectorStore):
             documents.append(document)
             metadatas.append(metadata)
 
-        self.collection.upsert(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas,
-        )
+        try:
+            self.collection.upsert(
+                ids=ids,
+                embeddings=embeddings,
+                documents=documents,
+                metadatas=metadatas,
+            )
+        except Exception as exc:
+            if "dimension" in str(exc).lower():
+                logger.warning(
+                    "Dimension mismatch during upsert in Chroma collection '%s'. Resetting collection...",
+                    self.collection_name,
+                )
+                self._reset_collection()
+                self.collection.upsert(
+                    ids=ids,
+                    embeddings=embeddings,
+                    documents=documents,
+                    metadatas=metadatas,
+                )
+            else:
+                raise
 
         logger.info(
             "Upserted %d vectors.",
@@ -127,22 +158,41 @@ class ChromaService(VectorStore):
     async def search(
         self,
         vector: list[float],
-        where: dict[str, Any] | None =None,
+        where: dict[str, Any] | None = None,
         limit: int = 5,
     ):
 
         self._ensure_collection()
 
-        return self.collection.query(
-            query_embeddings=[vector],
-            n_results=limit,
-            where=where,
-            include=[
-                "documents",
-                "metadatas",
-                "distances",
-            ],
-        )
+        try:
+            return self.collection.query(
+                query_embeddings=[vector],
+                n_results=limit,
+                where=where,
+                include=[
+                    "documents",
+                    "metadatas",
+                    "distances",
+                ],
+            )
+        except Exception as exc:
+            if "dimension" in str(exc).lower():
+                logger.warning(
+                    "Dimension mismatch during search in Chroma collection '%s'. Resetting collection...",
+                    self.collection_name,
+                )
+                self._reset_collection()
+                return self.collection.query(
+                    query_embeddings=[vector],
+                    n_results=limit,
+                    where=where,
+                    include=[
+                        "documents",
+                        "metadatas",
+                        "distances",
+                    ],
+                )
+            raise
 
     # ---------------------------------------------------------
     # Exists
