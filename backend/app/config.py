@@ -1,24 +1,33 @@
 from functools import lru_cache
+from pathlib import Path
+from typing import Optional
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Base directory of backend package
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Explicitly load .env file into os.environ using python-dotenv
+load_dotenv(BASE_DIR / ".env")
 
 
 class Settings(BaseSettings):
     # ==========================================================
-    # Application
+    # Application Configuration
     # ==========================================================
     APP_NAME: str
     APP_VERSION: str
     DEBUG: bool
 
     # ==========================================================
-    # Server
+    # Server Configuration
     # ==========================================================
     HOST: str
     PORT: int
 
     # ==========================================================
-    # PostgreSQL
+    # Database Configuration (PostgreSQL)
     # ==========================================================
     DB_HOST: str
     DB_PORT: int
@@ -27,49 +36,51 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
 
     # ==========================================================
-    # Redis
+    # Redis Configuration
     # ==========================================================
     REDIS_HOST: str
     REDIS_PORT: int
 
     # ==========================================================
-    # Storage
+    # Storage Configuration
     # ==========================================================
     REPORT_STORAGE: str
 
     # ==========================================================
-    # Gemini
+    # Ollama AI Configuration
     # ==========================================================
-    EMBEDDING_PROVIDER: str = "gemini"
-    GEMINI_API_KEY: str
-    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    EMBEDDING_PROVIDER: str
+    LLM_PROVIDER: str
+    OLLAMA_BASE_URL: str
+    OLLAMA_EMBED_MODEL: str
+    OLLAMA_LLM_MODEL: str
 
     # ==========================================================
     # Vector Store (ChromaDB)
     # ==========================================================
-    VECTOR_DB: str = "chroma"
-    CHROMA_PATH: str = "./storage/chroma"
-    CHROMA_COLLECTION: str = "financial_rag"
-    VECTOR_SIZE: int = 3072
+    VECTOR_DB: str
+    CHROMA_PATH: str
+    CHROMA_COLLECTION: str
+    VECTOR_SIZE: int
 
     # ==========================================================
-    # Auth & Email
+    # Auth & Email Configuration
     # ==========================================================
-    JWT_ACCESS_SECRET: str = "super_secret_access_key"
-    JWT_REFRESH_SECRET: str = "super_secret_refresh_key"
-    JWT_ACCESS_EXPIRES_MINUTES: int = 1440
-    JWT_REFRESH_EXPIRES_DAYS: int = 7
-    GOOGLE_CLIENT_ID: str = ""
-    FRONTEND_URL: str = "http://localhost:5173"
+    JWT_ACCESS_SECRET: str
+    JWT_REFRESH_SECRET: str
+    JWT_ACCESS_EXPIRES_MINUTES: int
+    JWT_REFRESH_EXPIRES_DAYS: int
+    GOOGLE_CLIENT_ID: Optional[str] = ""
+    FRONTEND_URL: str
 
-    EMAIL_HOST: str = "smtp.gmail.com"
-    EMAIL_PORT: int = 587
-    EMAIL_USER: str = ""
-    EMAIL_PASS: str = ""
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+    EMAIL_USER: Optional[str] = ""
+    EMAIL_PASS: Optional[str] = ""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(BASE_DIR / ".env"),
+        env_file_encoding="utf-8",
         extra="ignore",
     )
 
