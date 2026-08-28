@@ -44,11 +44,11 @@ When financial data is best understood visually (such as segment breakdowns, com
 ```chart
 {
   "type": "bar",
-  "title": "Microsoft Revenue by Segment (FY 2025)",
+  "title": "Company Revenue by Segment (FY 2025)",
   "data": [
-    { "name": "Intelligent Cloud", "value": 106265 },
-    { "name": "Productivity & Business", "value": 120810 },
-    { "name": "More Personal Computing", "value": 54649 }
+    { "name": "Segment A", "value": 106265 },
+    { "name": "Segment B", "value": 120810 },
+    { "name": "Segment C", "value": 54649 }
   ]
 }
 ```

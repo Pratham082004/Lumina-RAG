@@ -1,6 +1,6 @@
 import random
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -19,7 +19,7 @@ def generate_otp() -> str:
     return str(random.randint(100000, 999999))
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+def register(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -46,7 +46,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(verification_token)
     db.commit()
 
-    send_otp_email(user.email, otp)
+    background_tasks.add_task(send_otp_email, user.email, otp)
     return new_user
 
 
@@ -101,7 +101,7 @@ def verify_otp(payload: VerifyOTP, db: Session = Depends(get_db)):
 
 
 @router.post("/resend-otp")
-def resend_otp(payload: ResendOTP, db: Session = Depends(get_db)):
+def resend_otp(payload: ResendOTP, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -120,7 +120,7 @@ def resend_otp(payload: ResendOTP, db: Session = Depends(get_db)):
     db.add(verification_token)
     db.commit()
     
-    send_otp_email(user.email, otp)
+    background_tasks.add_task(send_otp_email, user.email, otp)
     return {"message": "OTP sent successfully"}
 
 
