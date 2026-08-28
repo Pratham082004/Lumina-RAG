@@ -1,9 +1,13 @@
 from contextlib import asynccontextmanager
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
+from app.database.base import Base
+from app.database.database import engine
 from app.dependencies import get_company_cache
 
 
@@ -13,7 +17,20 @@ async def lifespan(app: FastAPI):
     Startup and shutdown events.
     """
 
-    # Startup
+    # Run database migrations / ensure tables exist
+    try:
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        print("Alembic database migrations applied successfully.")
+    except Exception as exc:
+        print(f"Alembic migration info: {exc}. Initializing tables via Base.metadata...")
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("Database tables initialized successfully via Base.metadata.")
+        except Exception as table_exc:
+            print(f"Failed to initialize database tables: {table_exc}")
+
+    # Startup company cache
     cache = get_company_cache()
 
     try:
@@ -23,7 +40,15 @@ async def lifespan(app: FastAPI):
         )
     except Exception as exc:
         print(f"Failed to load SEC company cache: {exc}")
-        raise
+
+    # Initialize Chroma vector store collection
+    try:
+        from app.services.vector_store.factory import get_vector_store
+        vector_store = get_vector_store()
+        await vector_store.create_collection()
+        print("Vector store collection initialized successfully.")
+    except Exception as exc:
+        print(f"Failed to initialize vector store collection: {exc}")
 
     yield
 
@@ -39,7 +64,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins for dev, can restrict later
+    allow_origins=["*"],  # Allow all origins for dev, can restrict later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
