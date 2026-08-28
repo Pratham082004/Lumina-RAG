@@ -63,74 +63,40 @@
 ## System Architecture
 
 ```mermaid
-flowchart TB
-    subgraph Client ["Frontend (React 19 + TypeScript + Vite)"]
-        UI["Dashboard & Chat UI"]
-        Charts["Recharts Engine"]
-        Ticker["Stock Ticker Tooltips"]
-        AuthUI["JWT / Google OAuth UI"]
+graph TD
+    Client["Frontend\n(React 19 + TypeScript + Vite)"]
+    Gateway["API Gateway\n(FastAPI Python)"]
+    
+    subgraph Data ["Data & Storage Layer"]
+        Chroma[("ChromaDB\nVector Search")]
+        PG[("PostgreSQL\nUsers & Chat History")]
+    end
+    
+    subgraph Engine ["AI & External Services"]
+        Ollama["Ollama Local AI\n(qwen2.5 / bge-m3)"]
+        SEC["SEC EDGAR & Market APIs"]
     end
 
-    subgraph Gateway ["FastAPI API Gateway"]
-        AuthMod["Auth & User Module"]
-        IngestMod["SEC Ingestion Pipeline"]
-        RAGEngine["Time-Aware RAG Engine"]
-        StockMod["Real-Time Stock Service"]
-    end
-
-    subgraph DataStores ["Data & Storage Layer"]
-        PG[("PostgreSQL\n(Users, Chat History, Metadata)")]
-        Chroma[("ChromaDB\n(Vector Index - 1024d)")]
-        FS["Filing Storage Cache\n(Raw SEC Filings & PDFs)"]
-    end
-
-    subgraph External ["External Services & AI Infrastructure"]
-        Ollama["Ollama Local AI\n(LLM: qwen2.5 | Embed: bge-m3)"]
-        SEC["SEC EDGAR API"]
-        YFinance["Yahoo Finance API"]
-        SMTP["SMTP Server (Email OTP)"]
-    end
-
-    UI <-->|HTTP REST / JWT| Gateway
-    AuthMod <--> PG
-    AuthMod --> SMTP
-    IngestMod --> SEC
-    IngestMod --> FS
-    IngestMod --> Chroma
-    IngestMod --> PG
-    RAGEngine <--> Chroma
-    RAGEngine <--> Ollama
-    StockMod <--> YFinance
+    Client <-->|REST API / JWT| Gateway
+    Gateway <--> Chroma
+    Gateway <--> PG
+    Gateway <--> Ollama
+    Gateway <--> SEC
 ```
 
 ### Retrieval & Generation Pipeline
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Financial Analyst
-    participant FE as Frontend Dashboard
-    participant BE as FastAPI Backend
-    participant SEC as SEC EDGAR Pipeline
-    participant VDB as ChromaDB Vector Store
-    participant LLM as Ollama (qwen2.5)
-
-    User->>FE: Ask question ("What was Microsoft's cloud revenue in 2024?")
-    FE->>BE: POST /chat { question, session_id }
-    BE->>BE: Parse Company ("Microsoft" -> MSFT) & Year ("2024")
-    alt Filing Not Ingested
-        BE->>SEC: Fetch MSFT 10-K (2024) from SEC EDGAR
-        SEC->>VDB: Chunk, Embed (bge-m3), & Upsert Chunks
-    end
-    BE->>VDB: Query Vector Search (Filters: ticker=MSFT, year=2024, top_k=5)
-    VDB-->>BE: Return Top Relevant Chunks & Citations
-    BE->>LLM: Prompt LLM with Chunks + Question + Structured Chart Spec Schema
-    LLM-->>BE: Streamed Answer + Citation References + JSON Chart Data
-    BE-->>FE: JSON Response with Answer, Sources & Chart Spec
-    FE-->>User: Render Interactive Response + Sources + Recharts Bar Chart
+flowchart LR
+    A["User Query"] --> B["1. Parse Ticker & Year"]
+    B --> C["2. Fetch SEC Filing\n(If Missing)"]
+    C --> D["3. Vector Search\n(ChromaDB)"]
+    D --> E["4. Local LLM\n(Ollama)"]
+    E --> F["5. Answer + Citations\n+ Interactive Charts"]
 ```
 
 ---
+
 
 ## Tech Stack
 
